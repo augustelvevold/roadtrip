@@ -356,6 +356,12 @@ const BOOKING_KINDS = [
   ["annet","Annet","receipt"],
 ];
 function kindMeta(kind){ return BOOKING_KINDS.find(k=>k[0]===kind) || BOOKING_KINDS[BOOKING_KINDS.length-1]; }
+function mapUrl(loc){
+  loc = String(loc||"").trim();
+  if(!loc) return "";
+  if(/^https?:\/\//i.test(loc)) return loc;                 // ferdig kartlenke
+  return "https://maps.apple.com/?q=" + encodeURIComponent(loc); // adresse → søk
+}
 
 function bookingCardView(b){
   const card = el("div",{class:"bk"});
@@ -370,6 +376,7 @@ function bookingCardView(b){
   if(b.date) meta.append(el("span",{}, b.date));
   if(b.amount) meta.append(el("span",{}, b.amount));
   if(b.ref) meta.append(el("span",{}, "Ref: "+b.ref));
+  if(b.location) meta.append(el("a",{href:mapUrl(b.location),target:"_blank",rel:"noopener"}, icon("map-pin",12)," Kart"));
   if(b.email) meta.append(el("a",{href:b.email,target:"_blank",rel:"noopener"}, icon("mail",12)," E-post"));
   if(meta.children.length) card.append(meta);
   return card;
@@ -387,6 +394,7 @@ function bookingCardEdit(b, list, i){
   for(const [val,label] of BOOKING_KINDS){ const o=el("option",{value:val},label); if((b.kind||"overnatting")===val)o.selected=true; sel.append(o); }
   card.append(el("div",{class:"bk-grid"}, sel, inp(b.date,"Dato",v=>b.date=v)));
   card.append(inp(b.url,"Lenke (Airbnb/booking)",v=>b.url=v));
+  card.append(inp(b.location,"Sted/adresse (åpnes i kart)",v=>b.location=v));
   card.append(el("div",{class:"bk-grid"}, inp(b.ref,"Ref/bekreftelse",v=>b.ref=v), inp(b.amount,"Beløp",v=>b.amount=v)));
   card.append(inp(b.email,"E-post-lenke (valgfri)",v=>b.email=v));
   const pl = el("label",{class:"bk-paidbox"});
@@ -401,7 +409,7 @@ function bookingsList(list){
   const wrap = el("div",{class:"bookings"});
   (list||[]).forEach((b,i)=> wrap.append(editing ? bookingCardEdit(b,list,i) : bookingCardView(b)));
   if(editing) wrap.append(el("button",{class:"add",onclick:()=>{
-    list.push({id:uid(),title:"",kind:"overnatting",url:"",ref:"",date:"",amount:"",paid:false,email:""});
+    list.push({id:uid(),title:"",kind:"overnatting",url:"",location:"",ref:"",date:"",amount:"",paid:false,email:""});
     render(); dirty=true;
   }}, icon("plus",13)," Bestilling"));
   return wrap;

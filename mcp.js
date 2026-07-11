@@ -19,6 +19,18 @@ const express = require("express");
 
 const uid = () => "b" + Math.random().toString(36).slice(2, 9);
 
+// Finn en bestilling på tvers av globale bookings-blokker og dagers bookings.
+function findBooking(c, id) {
+  const lists = [];
+  for (const s of c.sections || []) for (const b of s.blocks || []) if (b.type === "bookings" && Array.isArray(b.items)) lists.push(b.items);
+  for (const d of c.days || []) if (Array.isArray(d.bookings)) lists.push(d.bookings);
+  for (const list of lists) {
+    const idx = list.findIndex((x) => x.id === id);
+    if (idx >= 0) return { list, idx, item: list[idx] };
+  }
+  return null;
+}
+
 // Bygger en fersk McpServer med alle verktøyene registrert.
 // I stateless modus lager vi én server + transport per request,
 // så dette kalles på hvert POST-kall (billig – to brukere totalt).
@@ -52,7 +64,7 @@ function buildServer(store) {
       title: "Oppdater reiseplan",
       description:
         "Erstatt hele reiseplanen med et nytt dokument. Hent planen med hent_plan først, gjør endringene dine, og send HELE det oppdaterte dokumentet tilbake her. Ikke utelat felter du ikke endret.\n\n" +
-        "Bestillinger: en booking er { id, title, kind, url, ref, date, amount, paid, email } der kind er en av 'overnatting'|'transport'|'aktivitet'|'mat'|'annet'. De kan ligge (a) globalt i en section-blokk { type:'bookings', title, items:[...] }, eller (b) på en dag i days[].bookings:[...]. For å legge til én enkelt bestilling er verktøyet legg_til_bestilling enklere.",
+        "Bestillinger: en booking er { id, title, kind, url, location, ref, date, amount, paid, email } der kind er en av 'overnatting'|'transport'|'aktivitet'|'mat'|'annet' og location er en adresse eller kartlenke. De kan ligge (a) globalt i en section-blokk { type:'bookings', title, items:[...] }, eller (b) på en dag i days[].bookings:[...]. For enkeltendringer er legg_til_bestilling / rediger_bestilling / oppdater_dag mye raskere.",
       inputSchema: {
         plan: z
           .object({
@@ -134,16 +146,18 @@ function buildServer(store) {
         belop: z.string().optional().describe("f.eks. '2 400 kr'"),
         betalt: z.boolean().optional().describe("standard: false"),
         epost: z.string().optional().describe("lenke til bekreftelses-epost (Gmail-søk, mailto e.l.)"),
+        sted: z.string().optional().describe("adresse eller kartlenke – blir en klikkbar kart-lenke"),
         dag_id: z.string().optional().describe("legg på en dag i stedet for global seksjon"),
       },
     },
-    async ({ tittel, type, lenke, ref, dato, belop, betalt, epost, dag_id }) => {
+    async ({ tittel, type, lenke, ref, dato, belop, betalt, epost, sted, dag_id }) => {
       const c = store.getContent();
       const booking = {
         id: uid(),
         title: tittel,
         kind: type || "annet",
         url: lenke || "",
+        location: sted || "",
         ref: ref || "",
         date: dato || "",
         amount: belop || "",
@@ -173,6 +187,103 @@ function buildServer(store) {
       }
       const rev = store.replaceContent(c);
       return { content: [{ type: "text", text: `La til «${tittel}» (${hvor}, rev ${rev}).` }] };
+    }
+  );
+
+  // --- Verktøy 6: oppdater én dag (rask – ikke hele planen) -----
+  // Hovedverktøyet for «gjøre om en dag». Send BARE feltene som endres.
+  server.registerTool(
+    "oppdater_dag",
+    {
+      title: "Oppdater én dag",
+      description:
+        "Endre én dag uten å skrive om hele planen (mye raskere). Send bare feltene du vil endre i 'endringer' – andre felter beholdes. Eksempler: { rows: [{time,text},...] } for ny tidsplan, { date: 'Mandag 20. juli' } for å flytte datoen, { title, chip } for info. Mulige felt: title, date, chip, rows, maps ({label,url}), blocks ({md}), bookings, images. Hent planen med hent_plan først for å se gjeldende innhold.",
+      inputSchema: {
+        dag_id: z.string().describe("dagens id, f.eks. 'd4'"),
+        endringer: z.object({}).passthrough().describe("kun feltene som skal endres"),
+      },
+    },
+    async ({ dag_id, endringer }) => {
+      const c = store.getContent();
+      const day = (c.days || []).find((d) => d.id === dag_id);
+      if (!day) return { content: [{ type: "text", text: `Fant ingen dag med id ${dag_id}.` }], isError: true };
+      Object.assign(day, endringer);
+      day.id = dag_id; // id skal aldri endres
+      const rev = store.replaceContent(c);
+      return { content: [{ type: "text", text: `Dag ${dag_id} oppdatert (rev ${rev}).` }] };
+    }
+  );
+
+  // --- Verktøy 7: rediger en bestilling ------------------------
+  server.registerTool(
+    "rediger_bestilling",
+    {
+      title: "Rediger bestilling",
+      description: "Endre felter på en eksisterende bestilling (finn id med hent_plan). Send bare feltene som skal endres.",
+      inputSchema: {
+        id: z.string().describe("bestillingens id"),
+        endringer: z
+          .object({
+            title: z.string().optional(),
+            kind: z.enum(["overnatting", "transport", "aktivitet", "mat", "annet"]).optional(),
+            url: z.string().optional(),
+            location: z.string().optional().describe("adresse eller kartlenke"),
+            ref: z.string().optional(),
+            date: z.string().optional(),
+            amount: z.string().optional(),
+            paid: z.boolean().optional(),
+            email: z.string().optional(),
+          })
+          .passthrough(),
+      },
+    },
+    async ({ id, endringer }) => {
+      const c = store.getContent();
+      const found = findBooking(c, id);
+      if (!found) return { content: [{ type: "text", text: `Fant ingen bestilling med id ${id}.` }], isError: true };
+      Object.assign(found.item, endringer);
+      found.item.id = id;
+      const rev = store.replaceContent(c);
+      return { content: [{ type: "text", text: `Bestilling ${id} oppdatert (rev ${rev}).` }] };
+    }
+  );
+
+  // --- Verktøy 8: merk bestilling betalt/ubetalt ---------------
+  server.registerTool(
+    "merk_betalt",
+    {
+      title: "Merk betalt",
+      description: "Sett en bestilling som betalt eller ikke betalt.",
+      inputSchema: {
+        id: z.string().describe("bestillingens id"),
+        betalt: z.boolean().describe("true = betalt, false = ikke betalt"),
+      },
+    },
+    async ({ id, betalt }) => {
+      const c = store.getContent();
+      const found = findBooking(c, id);
+      if (!found) return { content: [{ type: "text", text: `Fant ingen bestilling med id ${id}.` }], isError: true };
+      found.item.paid = betalt;
+      const rev = store.replaceContent(c);
+      return { content: [{ type: "text", text: `Bestilling ${id} markert ${betalt ? "betalt" : "ikke betalt"} (rev ${rev}).` }] };
+    }
+  );
+
+  // --- Verktøy 9: slett en bestilling --------------------------
+  server.registerTool(
+    "slett_bestilling",
+    {
+      title: "Slett bestilling",
+      description: "Fjern en bestilling (finn id med hent_plan).",
+      inputSchema: { id: z.string().describe("bestillingens id") },
+    },
+    async ({ id }) => {
+      const c = store.getContent();
+      const found = findBooking(c, id);
+      if (!found) return { content: [{ type: "text", text: `Fant ingen bestilling med id ${id}.` }], isError: true };
+      found.list.splice(found.idx, 1);
+      const rev = store.replaceContent(c);
+      return { content: [{ type: "text", text: `Bestilling ${id} slettet (rev ${rev}).` }] };
     }
   );
 
