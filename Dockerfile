@@ -2,7 +2,7 @@ FROM node:20-alpine
 WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev
-COPY server.js default-content.json ./
+COPY server.js mcp.js default-content.json ./
 COPY public ./public
 RUN mkdir -p public/vendor \
  && cp node_modules/marked/marked.min.js public/vendor/ \
