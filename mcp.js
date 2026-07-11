@@ -80,7 +80,7 @@ function buildServer(store) {
         "• Sjekklister (pakkeliste, booking-sjekkliste): legg_til_punkt / rediger_punkt / slett_punkt / kryss_av\n" +
         "• Dagsnotat: sett_notat\n\n" +
         "Hvis du likevel bruker denne: hent planen med hent_plan først, gjør endringene, og send HELE dokumentet tilbake – ikke utelat felter.\n\n" +
-        "Datamodell for bestillinger: { id, title, kind, url, location, ref, date, amount, paid, email }, kind ∈ overnatting|transport|aktivitet|mat|annet, location = adresse/kartlenke. Ligger enten globalt i section-blokk { type:'bookings', items:[...] } eller på en dag i days[].bookings:[...].",
+        "Datamodell for bestillinger: { id, title, kind, url, location, ref, date, amount, paid, email, day }, kind ∈ overnatting|transport|aktivitet|mat|annet, location = adresse/kartlenke, day = valgfri dag-id for hopp-lenker. Ligger enten globalt i section-blokk { type:'bookings', items:[...] } eller på en dag i days[].bookings:[...].",
       inputSchema: {
         plan: z
           .object({
@@ -152,7 +152,7 @@ function buildServer(store) {
     {
       title: "Legg til bestilling",
       description:
-        "Legg til én bestilling/betaling (overnatting, transport, aktivitet e.l.). Uten dag_id havner den i den globale seksjonen «Bestillinger & betalinger» (opprettes automatisk). Med dag_id (f.eks. 'd2') legges den på den dagen.",
+        "Legg til én bestilling/betaling (overnatting, transport, aktivitet e.l.). Havner som standard i den globale seksjonen «Bestillinger & betalinger» (opprettes automatisk). Bruk knyttet_dag for å beholde den i oversikten OG få hopp-lenker til/fra en dag (anbefalt). dag_id legger den fysisk inne på selve dagen i stedet.",
       inputSchema: {
         tittel: z.string().describe("f.eks. 'Airbnb – Stavanger'"),
         type: z.enum(["overnatting", "transport", "aktivitet", "mat", "annet"]).optional().describe("standard: annet"),
@@ -163,10 +163,11 @@ function buildServer(store) {
         betalt: z.boolean().optional().describe("standard: false"),
         epost: z.string().optional().describe("lenke til bekreftelses-epost (Gmail-søk, mailto e.l.)"),
         sted: z.string().optional().describe("adresse eller kartlenke – blir en klikkbar kart-lenke"),
-        dag_id: z.string().optional().describe("legg på en dag i stedet for global seksjon"),
+        knyttet_dag: z.string().optional().describe("dag-id (f.eks. 'd1') bestillingen gjelder – gir hopp-lenker mellom dag og bestilling"),
+        dag_id: z.string().optional().describe("legg bestillingen FYSISK på en dag i stedet for global seksjon"),
       },
     },
-    async ({ tittel, type, lenke, ref, dato, belop, betalt, epost, sted, dag_id }) => {
+    async ({ tittel, type, lenke, ref, dato, belop, betalt, epost, sted, knyttet_dag, dag_id }) => {
       const c = store.getContent();
       const booking = {
         id: uid(),
@@ -179,6 +180,7 @@ function buildServer(store) {
         amount: belop || "",
         paid: !!betalt,
         email: epost || "",
+        day: knyttet_dag || undefined,
       };
       let hvor;
       if (dag_id) {
@@ -249,6 +251,7 @@ function buildServer(store) {
             amount: z.string().optional(),
             paid: z.boolean().optional(),
             email: z.string().optional(),
+            day: z.string().optional().describe("dag-id bestillingen knyttes til (hopp-lenker)"),
           })
           .passthrough(),
       },

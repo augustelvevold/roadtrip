@@ -62,6 +62,13 @@ function applyCheck(id, value) {
   }
   return false;
 }
+function applyRowCheck(dayId, index, value) {
+  const day = (content.days || []).find((d) => d.id === dayId);
+  if (!day || !Array.isArray(day.rows) || !day.rows[index]) return false;
+  day.rows[index].done = !!value;
+  saveContent();
+  return true;
+}
 function applyNote(id, text) {
   content.notes = content.notes || {};
   const t = String(text || "").slice(0, 10000);
@@ -189,6 +196,13 @@ app.post("/api/check", express.json(), (req, res) => {
   const { id, value } = req.body || {};
   if (typeof id !== "string") return res.sendStatus(400);
   if (applyCheck(id, value)) return res.json({ ok: true });
+  res.sendStatus(404);
+});
+
+app.post("/api/rowcheck", express.json(), (req, res) => {
+  const { day, index, value } = req.body || {};
+  if (typeof day !== "string" || typeof index !== "number") return res.sendStatus(400);
+  if (applyRowCheck(day, index, value)) return res.json({ ok: true });
   res.sendStatus(404);
 });
 

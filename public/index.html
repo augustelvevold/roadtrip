@@ -39,10 +39,18 @@
   .day.collapsed .day-body{display:none}
   .day-body{padding:16px 20px 20px}
   table.sched{width:100%;border-collapse:collapse;margin:8px 0 14px}
-  table.sched td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.95rem}
-  table.sched td.t{white-space:nowrap;font-weight:600;color:var(--accent);width:92px}
+  table.sched td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.95rem}
+  table.sched td.t{white-space:nowrap;font-weight:600;color:var(--accent);width:1%;padding-right:12px}
   table.sched td p{margin:0}
-  .maps a{display:inline-block;background:var(--chip);border:1px solid var(--line);color:var(--accent);text-decoration:none;border-radius:10px;padding:8px 14px;margin:4px 6px 4px 0;font-size:.9rem}
+  table.sched tr.clickable{cursor:pointer}
+  table.sched tr.done td{color:var(--muted)}
+  table.sched tr.done td.t{color:var(--muted);font-weight:500}
+  table.sched tr.done .rowtext{text-decoration:line-through}
+  .rowcheck{color:var(--accent);margin-right:5px;vertical-align:middle}
+  .bk-day{margin-left:auto;font-size:.8rem;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+  .bk-daylinks{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
+  .bk-daylinks a{font-size:.82rem;color:var(--accent);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:3px 11px;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+  .maps a{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border:1px solid var(--line);color:var(--accent);text-decoration:none;border-radius:10px;padding:8px 14px;margin:4px 6px 4px 0;font-size:.9rem}
   .maps a:hover{background:#e2ece8}
   .section{padding:20px}
   .section h2{margin:0 0 10px;font-size:1.2rem;color:var(--accent)}
@@ -356,15 +364,18 @@ const BOOKING_KINDS = [
   ["annet","Annet","receipt"],
 ];
 function kindMeta(kind){ return BOOKING_KINDS.find(k=>k[0]===kind) || BOOKING_KINDS[BOOKING_KINDS.length-1]; }
+// Kart-lenke som ruter fra NÅVÆRENDE posisjon til målet.
+// Apple Maps bruker current location som start når saddr utelates.
 function mapUrl(loc){
   loc = String(loc||"").trim();
   if(!loc) return "";
-  if(/^https?:\/\//i.test(loc)) return loc;                 // ferdig kartlenke
-  return "https://maps.apple.com/?q=" + encodeURIComponent(loc); // adresse → søk
+  const m = loc.match(/[?&](?:daddr|destination|q|query)=([^&]+)/i); // trekk ut mål fra ferdig lenke
+  if(/^https?:\/\//i.test(loc)) return m ? "https://maps.apple.com/?daddr="+m[1]+"&dirflg=d" : loc;
+  return "https://maps.apple.com/?daddr=" + encodeURIComponent(loc) + "&dirflg=d";
 }
 
 function bookingCardView(b){
-  const card = el("div",{class:"bk"});
+  const card = el("div",{class:"bk",id:"bkref-"+b.id});
   const head = el("div",{class:"bk-head"}, icon(kindMeta(b.kind)[2],17));
   head.append(b.url
     ? el("a",{class:"bk-title",href:b.url,target:"_blank",rel:"noopener"}, b.title||"(uten navn)")
@@ -378,6 +389,10 @@ function bookingCardView(b){
   if(b.ref) meta.append(el("span",{}, "Ref: "+b.ref));
   if(b.location) meta.append(el("a",{href:mapUrl(b.location),target:"_blank",rel:"noopener"}, icon("map-pin",12)," Kart"));
   if(b.email) meta.append(el("a",{href:b.email,target:"_blank",rel:"noopener"}, icon("mail",12)," E-post"));
+  if(b.day){
+    const day = (C.days||[]).find(d=>d.id===b.day);
+    if(day){ const n = day.title.match(/^Dag (\d+)/)?.[1]||""; meta.append(el("a",{href:"#"+b.day}, icon("arrow-down",12)," Dag "+n)); }
+  }
   if(meta.children.length) card.append(meta);
   return card;
 }
@@ -397,6 +412,10 @@ function bookingCardEdit(b, list, i){
   card.append(inp(b.location,"Sted/adresse (åpnes i kart)",v=>b.location=v));
   card.append(el("div",{class:"bk-grid"}, inp(b.ref,"Ref/bekreftelse",v=>b.ref=v), inp(b.amount,"Beløp",v=>b.amount=v)));
   card.append(inp(b.email,"E-post-lenke (valgfri)",v=>b.email=v));
+  const daySel = el("select",{class:"bk-kind",onchange:e=>{b.day=e.target.value||undefined;dirty=true;}});
+  daySel.append(el("option",{value:""},"Knytt til dag: (ingen)"));
+  for(const dd of (C.days||[])){ const o=el("option",{value:dd.id}, "Knytt til "+dd.title); if(b.day===dd.id)o.selected=true; daySel.append(o); }
+  card.append(daySel);
   const pl = el("label",{class:"bk-paidbox"});
   const cb = el("input",{type:"checkbox"}); cb.checked=!!b.paid;
   cb.addEventListener("change",()=>{b.paid=cb.checked;dirty=true;});
@@ -449,6 +468,17 @@ function renderDay(d, di){
   card.append(head);
   const body = el("div",{class:"day-body"});
 
+  // lenker til globale bestillinger som er knyttet til denne dagen
+  if(!editing){
+    const refs = [];
+    for(const s of C.sections||[]) for(const bl of s.blocks||[]) if(bl.type==="bookings") for(const it of bl.items||[]) if(it.day===d.id) refs.push(it);
+    if(refs.length){
+      const dl = el("div",{class:"bk-daylinks"});
+      for(const it of refs) dl.append(el("a",{href:"#bkref-"+it.id}, icon(kindMeta(it.kind)[2],13), it.title||"Bestilling"));
+      body.append(dl);
+    }
+  }
+
   // tidsplan
   if(editing){
     d.rows.forEach((r,ri)=>{
@@ -464,11 +494,22 @@ function renderDay(d, di){
     body.append(el("button",{class:"add",onclick:()=>{d.rows.push({time:"",text:""});render();dirty=true;}},icon("plus",13)," Rad"));
   } else if(d.rows.length){
     const tb = el("table",{class:"sched"});
-    for(const r of d.rows){
-      tb.append(el("tr",{},
-        el("td",{class:"t"},r.time),
-        el("td",{html:mdInline(r.text)})));
-    }
+    d.rows.forEach((r,ri)=>{
+      const textTd = el("td",{});
+      const chk = el("span",{class:"rowcheck"});
+      if(r.done){ const c=icon("check",13); if(c.classList)c.classList.add("rowcheck-i"); chk.append(c); }
+      textTd.append(chk, el("span",{class:"rowtext",html:mdInline(r.text)}));
+      const tr = el("tr",{class:"clickable"+(r.done?" done":"")}, el("td",{class:"t"},r.time), textTd);
+      tr.addEventListener("click",(e)=>{
+        if(e.target.closest("a")) return;              // la lenker i teksten fungere
+        r.done = !r.done;
+        tr.classList.toggle("done", r.done);
+        chk.innerHTML="";
+        if(r.done){ const c=icon("check",13); chk.append(c); }
+        api("/api/rowcheck",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({day:d.id,index:ri,value:r.done})}).then(()=>flash());
+      });
+      tb.append(tr);
+    });
     body.append(tb);
   }
 
@@ -484,7 +525,10 @@ function renderDay(d, di){
     body.append(el("button",{class:"add",onclick:()=>{d.maps.push({label:"",url:""});render();dirty=true;}},icon("plus",13)," Kartlenke"));
   } else if(d.maps.length){
     const m = el("div",{class:"maps"});
-    for(const l of d.maps) m.append(el("a",{href:l.url,target:"_blank",rel:"noopener"},l.label));
+    for(const l of d.maps){
+      const label = String(l.label||"").replace(/^\s*apple maps:\s*/i,"");
+      m.append(el("a",{href:mapUrl(l.url),target:"_blank",rel:"noopener"}, icon("map",14), label));
+    }
     body.append(m);
   }
 
