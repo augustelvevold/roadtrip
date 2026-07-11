@@ -2,10 +2,13 @@ const express = require("express");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { mountMcp } = require("./mcp");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const PIN = process.env.PIN || "endre-meg";
+const API_TOKEN = process.env.API_TOKEN || ""; // egen token for skript/Claude (adskilt fra innloggings-PIN)
+const MCP_PATH = process.env.MCP_PATH || ""; // hemmelig sti for MCP-connector, f.eks. "/mcp/<lang-tilfeldig>"
 const DATA_DIR = path.join(__dirname, "data");
 const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
 const CONTENT_FILE = path.join(DATA_DIR, "content.json");
@@ -44,6 +47,29 @@ function saveContent() {
   }, 300);
 }
 
+// Delt logikk brukt av både HTTP-API-et og MCP-verktøyene ------
+function applyCheck(id, value) {
+  for (const sec of content.sections || []) {
+    for (const b of sec.blocks || []) {
+      if (b.type !== "checklist") continue;
+      const item = (b.items || []).find((it) => it.id === id);
+      if (item) {
+        item.done = !!value;
+        saveContent();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+function applyNote(id, text) {
+  content.notes = content.notes || {};
+  const t = String(text || "").slice(0, 10000);
+  if (t) content.notes[id] = t;
+  else delete content.notes[id];
+  saveContent();
+}
+
 // ---------- enkel sesjon (signert cookie) + Bearer-PIN for API/skript ----------
 function sign(ts) {
   return crypto.createHmac("sha256", SECRET).update(String(ts)).digest("hex");
@@ -65,14 +91,25 @@ function getCookie(req, name) {
   const m = (req.headers.cookie || "").match(new RegExp("(?:^|;\\s*)" + name + "=([^;]*)"));
   return m ? decodeURIComponent(m[1]) : null;
 }
+function safeEq(a, b) {
+  a = String(a || "");
+  b = String(b || "");
+  return a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 function pinOk(pin) {
-  pin = String(pin || "");
-  return pin.length === PIN.length && crypto.timingSafeEqual(Buffer.from(pin), Buffer.from(PIN));
+  return safeEq(pin, PIN);
+}
+function bearerOk(token) {
+  token = String(token || "");
+  if (!token) return false;
+  if (pinOk(token)) return true;                       // PIN funker fortsatt som Bearer
+  if (API_TOKEN && safeEq(token, API_TOKEN)) return true; // egen skript-token
+  return false;
 }
 function authed(req) {
   if (validToken(getCookie(req, "rt"))) return true;
   const h = req.headers.authorization || "";
-  if (h.startsWith("Bearer ") && pinOk(h.slice(7).trim())) return true; // for curl/skript/Claude
+  if (h.startsWith("Bearer ") && bearerOk(h.slice(7).trim())) return true; // for curl/skript/Claude
   return false;
 }
 
@@ -105,6 +142,23 @@ app.post("/login", express.json(), (req, res) => {
   res.sendStatus(204);
 });
 
+// MCP-connector: mountes FØR PIN-vakten. Den hemmelige stien (MCP_PATH)
+// er selve tilgangskontrollen. Uten MCP_PATH satt er endepunktet av.
+if (MCP_PATH) {
+  mountMcp(app, {
+    getContent: () => content,
+    replaceContent: (doc) => {
+      doc.rev = content.rev + 1;
+      content = doc;
+      saveContent();
+      return content.rev;
+    },
+    applyCheck,
+    applyNote,
+  }, MCP_PATH);
+  console.log(`MCP-connector aktiv på ${MCP_PATH}`);
+}
+
 // Alt under her krever gyldig sesjon eller Bearer-PIN
 app.use((req, res, next) => {
   if (authed(req)) return next();
@@ -134,27 +188,14 @@ app.put("/api/content", express.json({ limit: "5mb" }), (req, res) => {
 app.post("/api/check", express.json(), (req, res) => {
   const { id, value } = req.body || {};
   if (typeof id !== "string") return res.sendStatus(400);
-  for (const sec of content.sections || []) {
-    for (const b of sec.blocks || []) {
-      if (b.type !== "checklist") continue;
-      const item = (b.items || []).find((it) => it.id === id);
-      if (item) {
-        item.done = !!value;
-        saveContent();
-        return res.json({ ok: true });
-      }
-    }
-  }
+  if (applyCheck(id, value)) return res.json({ ok: true });
   res.sendStatus(404);
 });
 
 app.post("/api/note", express.json({ limit: "200kb" }), (req, res) => {
   const { id, text } = req.body || {};
   if (typeof id !== "string" || id.length > 100) return res.sendStatus(400);
-  content.notes = content.notes || {};
-  const t = String(text || "").slice(0, 10000);
-  if (t) content.notes[id] = t; else delete content.notes[id];
-  saveContent();
+  applyNote(id, text);
   res.json({ ok: true });
 });
 

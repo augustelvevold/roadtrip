@@ -5,7 +5,7 @@
     "subtitle": "Bergen → Voss → Trolltunga → Stavanger → Preikestolen → Kristiansand → Lillesand → Grimstad → Oslo → Bergen",
     "badge": "Lørdag 18. juli – onsdag 29. juli · Tesla (leiebil)"
   },
-  "intro": "> [!NOTE]\n> Klokkeslett er **referansetider** – ikke stress om dere ligger litt bak. Kjøretider er uten pauser. Teslaen planlegger lading selv når dere legger inn destinasjonen.",
+  "intro": "> [!NOTE]\n> Klokkeslettene er bare veiledende – vi stresser ikke om vi ligger litt bak. Kjøretidene er uten pauser.",
   "days": [
     {
       "id": "d1",
@@ -13,15 +13,15 @@
       "date": "Lørdag 18. juli",
       "chip": "~230 km kjøring",
       "rows": [
-        { "time": "08:00", "text": "Hente Tesla i Bergen. Sjekk at ladekabel er med, koble til CarPlay." },
-        { "time": "08:45", "text": "Kjør Bergen → Voss (E16, ca. 1 t 25 min). Frokost i bilen." },
-        { "time": "10:30", "text": "Ankomst Skydive Voss (Bømoen). Innsjekk – **sjekk bekreftelsesmailen for eksakt oppmøtetid**." },
-        { "time": "12:00", "text": "Tandemhopp! Vær kan forskyve hoppet – ha litt slingringsmonn." },
-        { "time": "14:00", "text": "Stor lunsj på Voss – f.eks. Tre Brør Café eller Voss Gondol-restauranten." },
-        { "time": "15:15", "text": "Kjør Voss → Skjeggedal P2 (via Hardangerbrua og Odda/Tyssedal, ca. 2 t 15 min). Handle ev. siste snacks i Odda." },
-        { "time": "17:30", "text": "Ankomst P2 Skjeggedal. Betal parkering i automaten (2 døgn ≈ 550 kr) + bomvei. Pakk om til fjellsekkene." },
-        { "time": "18:15", "text": "Start oppstigningen. Første del opp Mågelitopp-svingene er bratteste – ta det rolig, ca. 1,5–2 t." },
-        { "time": "20:30", "text": "Finn teltplass på platået (merkede plasser med teltsymbol, nedenfor stien). Middag fra turmat + solnedgang. Lyst til nesten kl. 23!" }
+        { "time": "08:00", "text": "Hente Tesla i Bergen. Sjekke at ladekabel er med." },
+        { "time": "08:45", "text": "Kjøre Bergen → Voss (E16, ca. 1 t 25 min). Frokost i bilen." },
+        { "time": "10:30", "text": "Skydive Voss (Bømoen). Innsjekk – **oppmøtetid står i bekreftelsesmailen**." },
+        { "time": "12:00", "text": "Tandemhopp! (Kan bli flyttet hvis været er dårlig.)" },
+        { "time": "14:00", "text": "Stor lunsj på Voss – Tre Brør Café eller Voss Gondol." },
+        { "time": "15:15", "text": "Kjøre Voss → Skjeggedal P2 (via Hardangerbrua og Odda, ca. 2 t 15 min). Siste snacks i Odda." },
+        { "time": "17:30", "text": "P2 Skjeggedal. Betale parkering i automaten (~550 kr for 2 døgn) + bomvei. Pakke om til fjellsekkene." },
+        { "time": "18:15", "text": "Starte oppstigningen. Mågelitopp-svingene først er brattest – ta det rolig, ca. 1,5–2 t." },
+        { "time": "20:30", "text": "Slå leir på platået (merkede teltplasser, nedenfor stien). Turmat + solnedgang. Lyst til nesten kl. 23!" }
       ],
       "maps": [
         { "label": "Apple Maps: Bergen → Skydive Voss", "url": "https://maps.apple.com/?saddr=Bergen&daddr=Skydive%20Voss&dirflg=d" },
@@ -29,8 +29,8 @@
       ],
       "images": [],
       "blocks": [
-        { "md": "> [!TIP]\n> **P2 Skjeggedal** – ingen booking, betal i automat (~550 kr/2 døgn). P3 Mågelitopp (kortere vei opp) kan bookes på [trolltunganorway.com](https://www.trolltunganorway.com/parking/) hvis dere vil. ([Offisiell info](https://www.trolltunga.com/en/parking-and-transport/parking))" },
-        { "md": "> [!NOTE]\n> Bruk merkede teltplasser, ikke telt ved stistart, bål er forbudt (15/4–15/9), alt søppel (også dopapir) bæres ned. [Les reglene her](https://www.trolltunga.com/en/plan-your-hike/camping-on-the-mountain)." }
+        { "md": "> [!TIP]\n> Vi står på **P2 Skjeggedal** – ingen booking, betaler i automat. P3 Mågelitopp er kortere vei opp hvis vi ombestemmer oss ([trolltunganorway.com](https://www.trolltunganorway.com/parking/))." },
+        { "md": "> [!NOTE]\n> Huske: bare merkede teltplasser, ikke telt ved stistart, ingen bål (forbudt 15/4–15/9), all søppel bæres ned – også dopapir. [Reglene her](https://www.trolltunga.com/en/plan-your-hike/camping-on-the-mountain)." }
       ]
     },
     {
@@ -39,14 +39,14 @@
       "date": "Søndag 19. juli",
       "chip": "~180 km + 15 km til fots",
       "rows": [
-        { "time": "06:00", "text": "Opp! Frokost: havregrøt/kaffe til Idun, halv bar + kaffe til August. Pakk leiren." },
-        { "time": "07:00", "text": "Gå videre mot Trolltunga (2–3 t avhengig av hvor dere teltet)." },
+        { "time": "06:00", "text": "Opp! Frokost: havregrøt/kaffe til Idun, halv bar + kaffe til August. Pakke ned leiren." },
+        { "time": "07:00", "text": "Videre mot Trolltunga (2–3 t alt etter hvor vi teltet)." },
         { "time": "09:30", "text": "Trolltunga! Tidlig = kort fotokø. Kamera + stativ frem. Nista med utsikt." },
-        { "time": "11:00", "text": "Start nedturen (hele veien til P2, ca. 4–5 t med pauser)." },
-        { "time": "15:30", "text": "Ved bilen. Skift klær, våtservietter, snacks." },
-        { "time": "16:00", "text": "Kjør Skjeggedal → Stavanger (Rv13 sørover via Sand, ferge Nesvik–Hjelmeland og Ryfast-tunnelen, ca. 4,5–5 t). Stopp: **Låtefossen** rett sør for Odda – 5 min og rett ved veien!" },
-        { "time": "18:30", "text": "Middagsstopp underveis, f.eks. i Sand, eller vent til Stavanger." },
-        { "time": "21:00", "text": "Ankomst Stavanger. Dusj. Stor middag – bestill takeaway hvis dere er slitne." }
+        { "time": "11:00", "text": "Nedturen (helt til P2, ca. 4–5 t med pauser)." },
+        { "time": "15:30", "text": "Ved bilen. Skifte klær, våtservietter, snacks." },
+        { "time": "16:00", "text": "Kjøre Skjeggedal → Stavanger (Rv13 via Sand, ferge Nesvik–Hjelmeland + Ryfast, ca. 4,5–5 t). Kjapp fotostopp ved **Låtefossen** sør for Odda." },
+        { "time": "18:30", "text": "Middagsstopp underveis (Sand), eller vente til Stavanger." },
+        { "time": "21:00", "text": "Framme i Stavanger. Dusj og en stor middag – takeaway hvis vi er utslitte." }
       ],
       "maps": [
         { "label": "Apple Maps: Skjeggedal → Stavanger", "url": "https://maps.apple.com/?saddr=Skjeggedal%2C%20Tyssedal&daddr=Stavanger&dirflg=d" },
@@ -54,7 +54,7 @@
       ],
       "images": [],
       "blocks": [
-        { "md": "> [!WARNING]\n> Tøff dag (10–12 t på beina + lang kjøretur). Plan B: overnatt i Odda og kjør til Stavanger mandag morgen." }
+        { "md": "> [!WARNING]\n> Dette blir den tøffeste dagen – 10–12 t på beina + lang kjøretur. Plan B hvis vi er helt ferdige: overnatte i Odda og kjøre videre mandag morgen." }
       ]
     },
     {
@@ -65,14 +65,14 @@
       "rows": [
         { "time": "09:30", "text": "Rolig morgen. Frokost til Idun, kaffe til August." },
         { "time": "12:00", "text": "Lunsj ute – Fisketorget eller Øvre Holmegate («fargegata»)." },
-        { "time": "14:00", "text": "Familietid / rusle i Gamle Stavanger (hvite trehus) / Sverd i fjell." },
+        { "time": "14:00", "text": "Familietid / rusle i Gamle Stavanger / Sverd i fjell." },
         { "time": "18:00", "text": "Middag med familien eller ute." },
-        { "time": "21:00", "text": "Pakk dagstursekk til Preikestolen. Lad bilen." }
+        { "time": "21:00", "text": "Pakke dagstursekk til Preikestolen. Lade bilen." }
       ],
       "maps": [],
       "images": [],
       "blocks": [
-        { "md": "> [!TIP]\n> Bruk dagen til å vaske turklærne fra Trolltunga – da har dere rent til Preikestolen." }
+        { "md": "> [!TIP]\n> Vaske turklærne fra Trolltunga i dag, så vi har rent til Preikestolen." }
       ]
     },
     {
@@ -81,14 +81,14 @@
       "date": "Tirsdag 21. juli",
       "chip": "~340 km + 8 km til fots",
       "rows": [
-        { "time": "06:15", "text": "Avreise Stavanger → Preikestolen parkering (via Ryfast, ca. 45 min). Tidlig start = parkering og sti uten kaos." },
-        { "time": "07:15", "text": "Start turen (8 km t/r, ca. 4 t inkl. pause på toppen). Nista til Idun på første pause." },
+        { "time": "06:15", "text": "Stavanger → Preikestolen parkering (via Ryfast, ca. 45 min). Vi drar tidlig for å slippe kø på parkering og sti." },
+        { "time": "07:15", "text": "Opp turen (8 km t/r, ca. 4 t med pause på toppen). Nista til Idun på første pause." },
         { "time": "09:15", "text": "Preikestolen! Bilder før dagsturistene kommer ca. 10–11." },
-        { "time": "11:30", "text": "Tilbake ved bilen. Skift, snacks. Parkering ca. 275–320 kr, ingen booking." },
-        { "time": "12:00", "text": "Kjør sørover mot Lindesnes (ca. 3 t). Stor lunsj underveis – f.eks. i Flekkefjord." },
+        { "time": "11:30", "text": "Tilbake ved bilen. Skifte, snacks. Parkering ca. 275–320 kr." },
+        { "time": "12:00", "text": "Sørover mot Lindesnes (ca. 3 t). Stor lunsj underveis, f.eks. Flekkefjord." },
         { "time": "15:30", "text": "Lindesnes fyr – Norges sørligste punkt. Rusletur og bilder (~1 t)." },
-        { "time": "17:00", "text": "Kjør Lindesnes → Kristiansand (ca. 1 t 15 min)." },
-        { "time": "18:30", "text": "Innsjekk Airbnb/hotell i Kristiansand. Dusj!" },
+        { "time": "17:00", "text": "Lindesnes → Kristiansand (ca. 1 t 15 min)." },
+        { "time": "18:30", "text": "Innsjekk i Kristiansand. Dusj!" },
         { "time": "19:30", "text": "Middag på Fiskebrygga." }
       ],
       "maps": [
@@ -98,7 +98,7 @@
       ],
       "images": [],
       "blocks": [
-        { "md": "> [!WARNING]\n> Lang dag! Hvis dere er slitne etter turen: dropp Lindesnes i dag og ta det som utflukt fra Kristiansand onsdag (1 t 15 min hver vei)." }
+        { "md": "> [!WARNING]\n> Lang dag. Er vi slitne etter turen, dropper vi Lindesnes og tar det som dagstur fra Kristiansand onsdag i stedet (1 t 15 hver vei)." }
       ]
     },
     {
@@ -107,15 +107,15 @@
       "date": "Onsdag 22. juli",
       "chip": "0 km – fri!",
       "rows": [
-        { "time": "10:00", "text": "Sen frokost/tidlig lunsj." },
-        { "time": "12:00", "text": "Valgfritt: Bystranda + Aquarama, Odderøya (kunst + turstier + kafé), eller shopping i Markens gate." },
+        { "time": "10:00", "text": "Sen frokost / tidlig lunsj." },
+        { "time": "12:00", "text": "Bystranda + Aquarama, Odderøya, eller shopping i Markens gate." },
         { "time": "16:00", "text": "Is på bryggekanten." },
-        { "time": "19:00", "text": "Middag – f.eks. Bønder i byen eller noe på Fiskebrygga." }
+        { "time": "19:00", "text": "Middag – Bønder i byen eller Fiskebrygga." }
       ],
       "maps": [],
       "images": [],
       "blocks": [
-        { "md": "> [!TIP]\n> Dyreparken er 15 min unna hvis dere vil ha en aktiv dag – men det er fort en heldagsgreie." }
+        { "md": "> [!TIP]\n> Dyreparken er 15 min unna hvis vi vil ha en aktiv dag – men det blir fort en heldagsgreie." }
       ]
     },
     {
@@ -125,9 +125,9 @@
       "chip": "~30 km",
       "rows": [
         { "time": "11:00", "text": "Utsjekk Kristiansand, rolig formiddag." },
-        { "time": "13:00", "text": "Lunsj, kjør Kristiansand → Lillesand (E18, ca. 30 min)." },
-        { "time": "15:00", "text": "Ankomst hos vennene i Lillesand (3 netter: tor–søn). Rusl i den hvite sørlandsbyen." },
-        { "time": "18:00", "text": "**Sup & Stup starter i dag (23.–25. juli)!** Ta kveldsstemningen på festivalområdet allerede torsdag." }
+        { "time": "13:00", "text": "Lunsj, så Kristiansand → Lillesand (E18, ca. 30 min)." },
+        { "time": "15:00", "text": "Framme hos vennene i Lillesand (3 netter, tor–søn). Rusle i sørlandsbyen." },
+        { "time": "18:00", "text": "**Sup & Stup starter i dag (23.–25. juli)!** Ta kveldsstemningen på festivalområdet allerede i kveld." }
       ],
       "maps": [
         { "label": "Kristiansand → Lillesand", "url": "https://maps.apple.com/?saddr=Kristiansand&daddr=Lillesand&dirflg=d" }
@@ -148,7 +148,7 @@
       "maps": [],
       "images": [],
       "blocks": [
-        { "md": "> [!TIP]\n> Program og billetter: [supogstup.no](https://www.supogstup.no/) – festivalen er 23.–25. juli 2026." }
+        { "md": "> [!TIP]\n> Program og billetter: [supogstup.no](https://www.supogstup.no/)." }
       ]
     },
     {
@@ -158,9 +158,9 @@
       "chip": "",
       "rows": [
         { "time": "10:30", "text": "Sove ut. Brunsj." },
-        { "time": "13:00", "text": "Forslag: båttur i Blindleia (sjekk rutebåten M/B Øya) eller bade ved Tingsakerstranda." },
+        { "time": "13:00", "text": "Båttur i Blindleia (rutebåten M/B Øya) eller bade ved Tingsakerstranda." },
         { "time": "18:00", "text": "Siste festivalkveld, eller rolig middag." },
-        { "time": "21:00", "text": "Ring besteforeldrene i Grimstad og avtal besøk i morgen. Lad bilen." }
+        { "time": "21:00", "text": "Ringe besteforeldrene i Grimstad og avtale besøk i morgen. Lade bilen." }
       ],
       "maps": [],
       "images": [],
@@ -172,11 +172,11 @@
       "date": "Søndag 26. juli",
       "chip": "~290 km",
       "rows": [
-        { "time": "10:00", "text": "Utsjekk Lillesand. Kjør til Grimstad (20 min)." },
-        { "time": "10:30", "text": "Besøk besteforeldre – lunsj hos dem eller ta dem med ut." },
-        { "time": "14:00", "text": "Kjør Grimstad → Oslo (E18, ca. 3 t 45 min). Snackspause underveis." },
-        { "time": "18:00", "text": "Innsjekk Oslo (2 netter). Hotell/Airbnb med parkering – ellers P-hus (ca. 300–450 kr/døgn)." },
-        { "time": "19:30", "text": "Middag – f.eks. Aker Brygge eller Vippa (matmarked på kaia)." }
+        { "time": "10:00", "text": "Utsjekk Lillesand. Til Grimstad (20 min)." },
+        { "time": "10:30", "text": "Besøke besteforeldre – lunsj hos dem eller ta dem med ut." },
+        { "time": "14:00", "text": "Grimstad → Oslo (E18, ca. 3 t 45 min). Snackspause underveis." },
+        { "time": "18:00", "text": "Innsjekk Oslo (2 netter). Sted med parkering – ellers P-hus (ca. 300–450 kr/døgn)." },
+        { "time": "19:30", "text": "Middag – Aker Brygge eller Vippa (matmarked på kaia)." }
       ],
       "maps": [
         { "label": "Lillesand → Grimstad", "url": "https://maps.apple.com/?saddr=Lillesand&daddr=Grimstad&dirflg=d" },
@@ -191,10 +191,10 @@
       "date": "Mandag 27. juli",
       "chip": "",
       "rows": [
-        { "time": "10:00", "text": "Frokost, så gåtur på Operataket + Munchmuseet / nye Nasjonalmuseet." },
-        { "time": "13:00", "text": "Stor lunsj – Mathallen på Vulkan er et sikkert kort." },
+        { "time": "10:00", "text": "Frokost, så Operataket + Munchmuseet / nye Nasjonalmuseet." },
+        { "time": "13:00", "text": "Stor lunsj – Mathallen på Vulkan." },
         { "time": "15:00", "text": "Vigelandsparken eller øyhopping i Oslofjorden (ferge fra Aker Brygge) hvis fint vær." },
-        { "time": "19:00", "text": "Middag. Tidlig kveld – lang kjøredag i morgen. Lad bilen!" }
+        { "time": "19:00", "text": "Middag, tidlig kveld – lang kjøredag i morgen. Lade bilen fullt!" }
       ],
       "maps": [],
       "images": [],
@@ -206,12 +206,12 @@
       "date": "Tirsdag 28. juli",
       "chip": "~470 km, 7–7,5 t",
       "rows": [
-        { "time": "08:30", "text": "Avreise Oslo. Anbefalt rute: Rv7 over Hardangervidda." },
+        { "time": "08:30", "text": "Avreise Oslo. Rv7 over Hardangervidda." },
         { "time": "11:30", "text": "Lunsjstopp på Geilo." },
-        { "time": "13:30", "text": "Stopp: **Vøringsfossen** (Måbødalen) – nye utsiktsplattformer og gangbro, 30–45 min." },
-        { "time": "15:00", "text": "Videre mot Bergen via Hardangerbrua og Norheimsund – stopp gjerne ved **Steinsdalsfossen** (fossen du kan gå bak, 15 min)." },
-        { "time": "17:30", "text": "Hjemme i Bergen! Tøm bilen, samle ladekabler." },
-        { "time": "Ons 08:30", "text": "**Onsdag 29. juli: Lever Teslaen før kl. 08:30.** Lad kvelden før, sjekk for glemte ting." }
+        { "time": "13:30", "text": "Stopp: **Vøringsfossen** (Måbødalen) – utsiktsplattformer og gangbro, 30–45 min." },
+        { "time": "15:00", "text": "Videre mot Bergen via Hardangerbrua og Norheimsund – stoppe ved **Steinsdalsfossen** (den vi kan gå bak, 15 min)." },
+        { "time": "17:30", "text": "Hjemme i Bergen! Tømme bilen, samle ladekabler." },
+        { "time": "Ons 08:30", "text": "**Onsdag 29. juli: levere Teslaen før kl. 08:30.** Lade kvelden før, sjekke for glemte ting." }
       ],
       "maps": [
         { "label": "Oslo → Vøringsfossen (Rv7)", "url": "https://maps.apple.com/?saddr=Oslo&daddr=V%C3%B8ringsfossen&dirflg=d" },
@@ -226,7 +226,7 @@
       "id": "mat",
       "title": "Matplan",
       "blocks": [
-        { "type": "md", "md": "**August: lett frokost + stor lunsj + middag. Idun: ordentlig frokost + lunsj + middag. Snacks hele veien.**\n\n### Fjellovernatting Trolltunga (lør kveld → søn ettermiddag)\n\n**Lørdag middag (på fjellet):**\n\n- 2× frysetørket turmat (Real Turmat/Firepot – kjøttgryte + pasta o.l.)\n- Sjokolade + te/kakao\n\n**Søndag frokost:**\n\n- Idun: havregrynpakke/instant grøt + rosiner, kaffe\n- August: kaffe + müslibar\n\n**Tursnacks + nistelunsj:**\n\n- Grove rundstykker med brunost/salami (smurt lørdag)\n- Nøttemiks + tørket frukt\n- Kvikk Lunsj ×4, saltstenger\n- Sportsdrikk-pulver\n\n**Vann:** Drikk fra rennende bekker underveis, fyll flasker der. Ta 1 L hver fra start.\n\n> [!WARNING]\n> **Stormkjøkken + gassboks + lighter** – ikke glem disse. Bål er forbudt på fjellet om sommeren.\n\n### Resten av turen\n\n- **Frokost:** Yoghurt/knekkebrød til Idun der dere bor; August tar kaffe. Hotell løser dette selv.\n- **Lunsj:** Spis stort ute ca. kl. 12–14.\n- **Middag:** Én stor middag ca. kl. 18–19:30.\n- **Bil-snacks:** Nøtter, frukt, müslibarer, vann – fyll på ved matbutikk-stopp.\n- **Turdager:** Dobbel snacksmengde + nista." }
+        { "type": "md", "md": "August: lett frokost, stor lunsj, middag. Idun: ordentlig frokost, lunsj, middag. Snacks hele veien.\n\n### Fjellovernatting Trolltunga (lør kveld → søn ettermiddag)\n\n**Lørdag middag på fjellet:**\n\n- 2× frysetørket turmat (Real Turmat/Firepot)\n- Sjokolade + te/kakao\n\n**Søndag frokost:**\n\n- Idun: instant grøt + rosiner, kaffe\n- August: kaffe + müslibar\n\n**Tursnacks + nistelunsj:**\n\n- Grove rundstykker med brunost/salami (smurt lørdag)\n- Nøttemiks + tørket frukt\n- Kvikk Lunsj ×4, saltstenger\n- Sportsdrikk-pulver\n\nVi fyller vannflaskene fra rennende bekker underveis, 1 L hver fra start.\n\n> [!WARNING]\n> Ikke glem **stormkjøkken + gassboks + lighter**. Bål er forbudt på fjellet om sommeren.\n\n### Resten av turen\n\n- **Frokost:** yoghurt/knekkebrød til Idun der vi bor, kaffe til August. Hotell ordner seg selv.\n- **Lunsj:** stort måltid ute ca. 12–14.\n- **Middag:** én ordentlig ca. 18–19:30.\n- **I bilen:** nøtter, frukt, müslibarer, vann – fylle på ved matbutikk.\n- **Turdager:** dobbel snacksmengde + nista." }
       ]
     },
     {
@@ -285,24 +285,24 @@
       "title": "Booking-sjekkliste (viktigst øverst)",
       "blocks": [
         { "type": "checklist", "title": "", "items": [
-          { "id": "bk01", "text": "**Bekreft Skydive Voss** – hopp lør 18/7 kl. 12:00, sjekk oppmøtetid i bekreftelsen ([skydivevoss.no](https://www.skydivevoss.no))", "done": false },
-          { "id": "bk02", "text": "**Bekreft Tesla-leie** – henting lør 18/7, levering ons 29/7 før 08:30", "done": false },
-          { "id": "bk03", "text": "**Trolltunga: P2 Skjeggedal** – ingen forhåndsbestilling, betal i automat ved ankomst (~550 kr for 2 døgn)", "done": false },
-          { "id": "bk04", "text": "**Avklar overnatting Stavanger** med familie (søn 19/7 + man 20/7) – ellers book Airbnb/hotell m/parkering", "done": false },
-          { "id": "bk05", "text": "**Book Kristiansand** tir 21/7 → tor 23/7 (2 netter), Airbnb eller hotell med parkering", "done": false },
-          { "id": "bk06", "text": "**Avklar med vennene i Lillesand** – tor 23/7 → søn 26/7 (3 netter), ankomst ca. kl. 15", "done": false },
+          { "id": "bk01", "text": "**Bekrefte Skydive Voss** – hopp lør 18/7 kl. 12:00, oppmøtetid i bekreftelsen ([skydivevoss.no](https://www.skydivevoss.no))", "done": false },
+          { "id": "bk02", "text": "**Bekrefte Tesla-leie** – henting lør 18/7, levering ons 29/7 før 08:30", "done": false },
+          { "id": "bk03", "text": "**Trolltunga: P2 Skjeggedal** – ingen booking, betale i automat ved ankomst (~550 kr)", "done": false },
+          { "id": "bk04", "text": "**Overnatting Stavanger** – avklare med familie (søn 19/7 + man 20/7), ellers Airbnb/hotell m/parkering", "done": false },
+          { "id": "bk05", "text": "**Booke Kristiansand** tir 21/7 → tor 23/7 (2 netter), Airbnb eller hotell med parkering", "done": false },
+          { "id": "bk06", "text": "**Avklare med vennene i Lillesand** – tor 23/7 → søn 26/7 (3 netter), ankomst ca. kl. 15", "done": false },
           { "id": "bk07", "text": "**Billetter Sup & Stup** 23.–25. juli ([supogstup.no](https://www.supogstup.no/))", "done": false },
-          { "id": "bk08", "text": "**Book Oslo** søn 26/7 → tir 28/7 (2 netter) – med parkering, eller P-hus i nærheten", "done": false },
-          { "id": "bk09", "text": "**Ring besteforeldre i Grimstad** – er de hjemme søndag 26/7?", "done": false },
-          { "id": "bk10", "text": "Kjøp turmat + gass (sportsbutikk i Bergen før avreise)", "done": false },
-          { "id": "bk11", "text": "Handle tursnacks + niste-ingredienser (fredag 17/7)", "done": false },
-          { "id": "bk12", "text": "Lad kamerabatterier, tøm minnekort, test stativ", "done": false },
-          { "id": "bk13", "text": "Sjekk værmelding Trolltunga (yr.no «Trolltunga») torsdag/fredag før – ved styggevær, snu planen", "done": false }
+          { "id": "bk08", "text": "**Booke Oslo** søn 26/7 → tir 28/7 (2 netter) – med parkering eller P-hus i nærheten", "done": false },
+          { "id": "bk09", "text": "**Ringe besteforeldre i Grimstad** – er de hjemme søndag 26/7?", "done": false },
+          { "id": "bk10", "text": "Kjøpe turmat + gass (sportsbutikk i Bergen før avreise)", "done": false },
+          { "id": "bk11", "text": "Handle tursnacks + niste (fredag 17/7)", "done": false },
+          { "id": "bk12", "text": "Lade kamerabatterier, tømme minnekort, teste stativ", "done": false },
+          { "id": "bk13", "text": "Sjekke værmelding for Trolltunga tors/fre før – snu planen ved styggevær", "done": false }
         ]},
-        { "type": "md", "md": "> [!TIP]\n> Huk av etter hvert som dere ordner ting!" }
+        { "type": "md", "md": "> [!TIP]\n> Huke av etter hvert som vi ordner ting!" }
       ]
     }
   ],
   "notes": {},
-  "footer": "Kjøretider er estimater uten pauser · Sjekk [yr.no](https://www.yr.no) og [vegvesen.no/trafikk](https://www.vegvesen.no/trafikk) før fjellturer og lange etapper.\n\nKilder: [Trolltunga parkering](https://www.trolltunga.com/en/parking-and-transport/parking) · [Teltregler](https://www.trolltunga.com/en/plan-your-hike/camping-on-the-mountain) · [Sup & Stup 2026](https://www.supogstup.no/) · [Preikestolen parkering](https://preikestolen365.com/parking-at-preikestolen/)"
+  "footer": "Kjøretidene er uten pauser · Vi sjekker [yr.no](https://www.yr.no) og [vegvesen.no/trafikk](https://www.vegvesen.no/trafikk) før fjellturer og lange etapper.\n\nKilder: [Trolltunga parkering](https://www.trolltunga.com/en/parking-and-transport/parking) · [Teltregler](https://www.trolltunga.com/en/plan-your-hike/camping-on-the-mountain) · [Sup & Stup 2026](https://www.supogstup.no/) · [Preikestolen parkering](https://preikestolen365.com/parking-at-preikestolen/)"
 }

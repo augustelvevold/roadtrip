@@ -5,7 +5,9 @@ services:
     ports:
       - "8080:3000"        # endre 8080 til ønsket port på LXC-en
     environment:
-      - PIN=endre-meg      # delt PIN/passord for dere to
+      - PIN=endre-meg      # delt PIN/passord for dere to (innlogging)
+      - API_TOKEN=         # valgfritt; egen lang token for skript/Claude via "Authorization: Bearer <token>"
+      - MCP_PATH=          # valgfritt; hemmelig sti for MCP-connector, f.eks. /mcp/<lang-tilfeldig-streng>
       - SESSION_SECRET=    # valgfritt; genereres og lagres i ./data hvis tom
     volumes:
       - ./data:/app/data   # delt tilstand (avkrysninger + notater) overlever restart

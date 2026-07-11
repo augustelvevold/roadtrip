@@ -16,8 +16,16 @@
   header.hero h1{font-size:1.9rem;margin:0 0 6px}
   header.hero p{color:var(--muted);margin:4px 0}
   .badge{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:4px 14px;font-size:.85rem;margin-top:10px}
-  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
-  nav.toc a{color:var(--accent);text-decoration:none;margin-right:14px;font-size:.92rem;display:inline-block;padding:2px 0}
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 18px;margin:20px 0}
+  .toc-row{display:flex;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}
+  .toc-row:last-child{border-bottom:none}
+  .toc-row:hover .toc-title{text-decoration:underline}
+  .toc-num{font-size:.8rem;color:var(--muted);width:38px;flex:none}
+  .toc-date{font-size:.85rem;color:var(--muted);width:150px;flex:none}
+  .toc-title{color:var(--accent);font-size:.92rem;flex:1}
+  .toc-sections{display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;margin-top:6px;border-top:1px solid var(--line)}
+  .toc-sections a{display:inline-flex;align-items:center;gap:5px;color:var(--accent);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 13px;font-size:.85rem;text-decoration:none}
+  .toc-sections a:hover{background:#e2ece8}
   .day,.section{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:22px 0;overflow:hidden}
   .day-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;padding:16px 20px;background:linear-gradient(90deg,#1f6f5c,#2b8a72);color:#fff}
   .day-head h2{margin:0;font-size:1.15rem}
@@ -75,16 +83,16 @@
   button.btn{border:none;border-radius:999px;padding:9px 18px;font-size:.92rem;cursor:pointer;background:var(--chip);color:var(--accent);font-weight:600}
   button.btn.primary{background:var(--accent);color:#fff}
   button.btn.danger{background:#fdefee;color:#b3352f}
-  button.mini{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:2px 9px;font-size:.85rem;cursor:pointer;line-height:1.5}
+  button.mini{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:1px 6px;font-size:.78rem;cursor:pointer;line-height:1.4}
   button.mini:hover{color:#b3352f;border-color:#e8b7b4}
   button.add{border:1px dashed var(--accent);background:transparent;color:var(--accent);border-radius:10px;padding:6px 14px;font-size:.88rem;cursor:pointer;margin:6px 6px 0 0}
-  .edit input[type=text], .edit textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit;font-size:.92rem;background:#fffdf8}
-  .edit textarea{resize:vertical;min-height:38px}
+  .edit input[type=text], .edit textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:4px 7px;font:inherit;font-size:.92rem;background:#fffdf8;box-sizing:border-box}
+  .edit textarea{resize:vertical;min-height:24px}
   .edit textarea.md{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
-  .erow{display:flex;gap:8px;margin:6px 0;align-items:flex-start}
-  .erow .time{width:96px;flex:none}
-  .erow .grow{flex:1}
-  .ecol{display:flex;flex-direction:column;gap:3px;flex:none}
+  .erow{display:flex;gap:6px;margin:2px 0;align-items:center}
+  .erow .time{width:76px;flex:0 0 76px}
+  .erow .grow{flex:1;min-width:0}
+  .ecol{display:flex;flex-direction:row;gap:1px;flex:none}
   .ehead input{background:rgba(255,255,255,.95)}
   .ehead{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;width:100%}
   .mdhint{font-size:.78rem;color:var(--muted);margin-top:2px}
@@ -92,16 +100,20 @@
   #sync{position:fixed;bottom:74px;right:16px;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:19}
   #sync.show{opacity:1}
   .uplbl{display:inline-block;border:1px dashed var(--accent);color:var(--accent);border-radius:10px;padding:6px 14px;font-size:.88rem;cursor:pointer;margin-top:6px}
+  .lucide{display:inline-block;vertical-align:middle;flex-shrink:0;pointer-events:none}
+  button .lucide, label .lucide, a .lucide{margin-right:4px}
+  button.mini .lucide{margin-right:0}
 </style>
 </head>
 <body>
 <div id="banner"></div>
 <div class="wrap" id="app"><p style="text-align:center;color:#7a766c">Laster…</p></div>
 <div id="toolbar" class="toolbar"></div>
-<div id="sync">✓ Lagret</div>
+<div id="sync">Lagret</div>
 
 <script src="/vendor/marked.min.js"></script>
 <script src="/vendor/purify.min.js"></script>
+<script src="/vendor/lucide.min.js"></script>
 <script>
 "use strict";
 /* ============ tilstand ============ */
@@ -114,8 +126,45 @@ const toolbar = document.getElementById("toolbar");
 const banner = document.getElementById("banner");
 const uid = () => "x" + Math.random().toString(36).slice(2, 9);
 
+function iconHtml(name, size=14){
+  if(typeof lucide === 'undefined') return '';
+  const pascal = name.replace(/(^|-)([a-z0-9])/g, (_,__,c) => c.toUpperCase());
+  const data = lucide[pascal];
+  if(!data) return '';
+  const kids = data.map(([tag,attrs])=>{
+    const a = Object.entries(attrs||{}).map(([k,v])=>`${k}="${v}"`).join(' ');
+    return `<${tag} ${a}/>`;
+  }).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0;margin-right:4px">${kids}</svg>`;
+}
+function icon(name, size=14){
+  if(typeof lucide === 'undefined') return document.createTextNode('');
+  const pascal = name.replace(/(^|-)([a-z0-9])/g, (_,__,c) => c.toUpperCase());
+  const data = lucide[pascal];
+  if(!data) return document.createTextNode('');
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS,'svg');
+  svg.setAttribute('width', size); svg.setAttribute('height', size);
+  svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','none');
+  svg.setAttribute('stroke','currentColor'); svg.setAttribute('stroke-width','2');
+  svg.setAttribute('stroke-linecap','round'); svg.setAttribute('stroke-linejoin','round');
+  svg.style.cssText='display:inline-block;vertical-align:middle;flex-shrink:0';
+  for(const [tag, attrs] of data){
+    const el=document.createElementNS(NS,tag);
+    for(const [k,v] of Object.entries(attrs||{})) el.setAttribute(k,v);
+    svg.appendChild(el);
+  }
+  return svg;
+}
+
 /* ============ markdown m/ GitHub-admonitions ============ */
-const ADM = { tip:"💡 Tips", note:"ℹ️ Merk", warning:"⚠️ Obs", important:"❗ Viktig", caution:"⚠️ Advarsel" };
+const ADM = {
+  tip:      iconHtml('lightbulb')     + "Tips",
+  note:     iconHtml('info')          + "Merk",
+  warning:  iconHtml('triangle-alert')+ "Obs",
+  important:iconHtml('circle-alert')  + "Viktig",
+  caution:  iconHtml('triangle-alert')+ "Advarsel"
+};
 function preAdm(src){
   const lines = String(src||"").split("\n"), out=[]; let i=0;
   while(i<lines.length){
@@ -155,7 +204,7 @@ function inp(value, placeholder, oninput, cls){
   return i;
 }
 function ta(value, placeholder, oninput, cls){
-  const t = el("textarea",{class:cls||"",placeholder:placeholder||""});
+  const t = el("textarea",{class:cls||"",placeholder:placeholder||"",rows:1});
   t.value = value||"";
   t.addEventListener("input",()=>{oninput(t.value); dirty=true; autosize(t);});
   requestAnimationFrame(()=>autosize(t));
@@ -164,7 +213,7 @@ function ta(value, placeholder, oninput, cls){
 function autosize(t){ t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
 function move(arr,i,dir){ const j=i+dir; if(j<0||j>=arr.length)return; [arr[i],arr[j]]=[arr[j],arr[i]]; render(); dirty=true; }
 function flash(msg){
-  const s=document.getElementById("sync"); s.textContent=msg||"✓ Lagret";
+  const s=document.getElementById("sync"); s.textContent=msg||"Lagret";
   s.classList.add("show"); clearTimeout(flash.t); flash.t=setTimeout(()=>s.classList.remove("show"),1400);
 }
 async function api(url, opts){
@@ -177,35 +226,35 @@ async function api(url, opts){
 function render(){
   app.innerHTML="";
   banner.innerHTML="";
-  if(editing) banner.append(el("div",{class:"editing-banner"},"✏️ Redigeringsmodus – husk å lagre når du er ferdig"));
+  if(editing) banner.append(el("div",{class:"editing-banner"},icon("pencil",13)," Redigeringsmodus – husk å lagre når du er ferdig"));
 
   // hero
   const hero = el("header",{class:"hero"});
   if(editing){
     hero.classList.add("edit");
-    hero.append(
-      inp(C.hero.title,"Tittel",v=>C.hero.title=v),
-      el("div",{style:"height:6px"}),
-      inp(C.hero.subtitle,"Undertittel",v=>C.hero.subtitle=v),
-      el("div",{style:"height:6px"}),
-      inp(C.hero.badge,"Badge-tekst",v=>C.hero.badge=v)
-    );
+    hero.append(inp(C.hero.title,"Tittel",v=>C.hero.title=v));
   } else {
-    hero.append(
-      el("h1",{},C.hero.title),
-      el("p",{},C.hero.subtitle),
-      el("p",{class:"badge"},C.hero.badge)
-    );
+    hero.append(el("h1",{},C.hero.title));
   }
   app.append(hero);
 
-  // toc (kun visning)
-  if(!editing){
-    const toc = el("nav",{class:"toc"}, el("strong",{},"Hopp til: "));
-    for(const d of C.days) toc.append(el("a",{href:"#"+d.id}, d.date ? d.date.split(" ").slice(0,2).join(" ")+" " : "", d.title.replace(/^Dag \d+\s*·\s*/,"").slice(0,22)));
-    for(const s of C.sections) toc.append(el("a",{href:"#"+s.id}, s.title.slice(0,20)));
-    app.append(toc);
+  // toc (alltid synlig)
+  const toc = el("nav",{class:"toc"});
+  for(const d of C.days){
+    const num = d.title.match(/^Dag (\d+)/)?.[1];
+    const title = d.title.replace(/^Dag \d+\s*[·\-]\s*/,"");
+    toc.append(el("a",{class:"toc-row",href:"#"+d.id},
+      el("span",{class:"toc-num"}, num ? "Dag "+num : ""),
+      el("span",{class:"toc-date"}, d.date||""),
+      el("span",{class:"toc-title"}, title)
+    ));
   }
+  if(C.sections.length){
+    const sec = el("div",{class:"toc-sections"});
+    for(const s of C.sections) sec.append(el("a",{href:"#"+s.id}, icon("link",13), s.title));
+    toc.append(sec);
+  }
+  app.append(toc);
 
   // intro
   if(editing){
@@ -222,7 +271,7 @@ function render(){
     app.append(el("button",{class:"add",onclick:()=>{
       C.days.push({id:uid(),title:"Dag "+(C.days.length+1)+" · Ny dag",date:"",chip:"",rows:[{time:"09:00",text:"…"}],maps:[],images:[],blocks:[]});
       render(); dirty=true;
-    }},"＋ Legg til dag"));
+    }},icon("plus",13)," Legg til dag"));
   }
 
   // seksjoner
@@ -231,7 +280,7 @@ function render(){
     app.append(el("button",{class:"add",onclick:()=>{
       C.sections.push({id:uid(),title:"Ny seksjon",blocks:[{type:"md",md:"Skriv her…"}]});
       render(); dirty=true;
-    }},"＋ Legg til seksjon"));
+    }},icon("plus",13)," Legg til seksjon"));
   }
 
   // footer
@@ -244,6 +293,7 @@ function render(){
   }
 
   renderToolbar();
+  if(editing) requestAnimationFrame(()=>app.querySelectorAll("textarea").forEach(autosize));
 }
 
 function mdHint(){
@@ -271,14 +321,14 @@ function renderDay(d, di){
     d.rows.forEach((r,ri)=>{
       body.append(el("div",{class:"erow"},
         el("div",{class:"ecol"},
-          el("button",{class:"mini",title:"Flytt opp",onclick:()=>move(d.rows,ri,-1)},"↑"),
-          el("button",{class:"mini",title:"Flytt ned",onclick:()=>move(d.rows,ri,1)},"↓")),
+          el("button",{class:"mini",title:"Flytt opp",onclick:()=>move(d.rows,ri,-1)},icon("chevron-up",12)),
+          el("button",{class:"mini",title:"Flytt ned",onclick:()=>move(d.rows,ri,1)},icon("chevron-down",12))),
         (()=>{const i=inp(r.time,"kl.",v=>r.time=v);i.classList.add("time");return i;})(),
         (()=>{const t=ta(r.text,"Beskrivelse (markdown)",v=>r.text=v);t.classList.add("grow");return t;})(),
-        el("button",{class:"mini",title:"Slett rad",onclick:()=>{d.rows.splice(ri,1);render();dirty=true;}},"🗑")
+        el("button",{class:"mini",title:"Slett rad",onclick:()=>{d.rows.splice(ri,1);render();dirty=true;}},icon("trash-2",13))
       ));
     });
-    body.append(el("button",{class:"add",onclick:()=>{d.rows.push({time:"",text:""});render();dirty=true;}},"＋ Rad"));
+    body.append(el("button",{class:"add",onclick:()=>{d.rows.push({time:"",text:""});render();dirty=true;}},icon("plus",13)," Rad"));
   } else if(d.rows.length){
     const tb = el("table",{class:"sched"});
     for(const r of d.rows){
@@ -296,9 +346,9 @@ function renderDay(d, di){
       body.append(el("div",{class:"erow"},
         (()=>{const i=inp(m.label,"Etikett",v=>m.label=v);i.classList.add("grow");return i;})(),
         (()=>{const i=inp(m.url,"https://maps.apple.com/…",v=>m.url=v);i.classList.add("grow");return i;})(),
-        el("button",{class:"mini",onclick:()=>{d.maps.splice(mi,1);render();dirty=true;}},"🗑")));
+        el("button",{class:"mini",onclick:()=>{d.maps.splice(mi,1);render();dirty=true;}},icon("trash-2",13))));
     });
-    body.append(el("button",{class:"add",onclick:()=>{d.maps.push({label:"🗺️ ",url:""});render();dirty=true;}},"＋ Kartlenke"));
+    body.append(el("button",{class:"add",onclick:()=>{d.maps.push({label:"",url:""});render();dirty=true;}},icon("plus",13)," Kartlenke"));
   } else if(d.maps.length){
     const m = el("div",{class:"maps"});
     for(const l of d.maps) m.append(el("a",{href:l.url,target:"_blank",rel:"noopener"},l.label));
@@ -310,7 +360,7 @@ function renderDay(d, di){
     const g = el("div",{class:"imgs"});
     d.images.forEach((im,ii)=>{
       const w = el("div",{class:"imgwrap"}, el("img",{src:im.url,alt:im.caption||"",loading:"lazy"}));
-      if(editing) w.append(el("button",{class:"mini imgdel",onclick:()=>{d.images.splice(ii,1);render();dirty=true;}},"🗑"));
+      if(editing) w.append(el("button",{class:"mini imgdel",onclick:()=>{d.images.splice(ii,1);render();dirty=true;}},icon("trash-2",13)));
       g.append(w);
     });
     body.append(g);
@@ -318,14 +368,14 @@ function renderDay(d, di){
       const fi = el("input",{type:"file",accept:"image/*",multiple:"",style:"display:none"});
       fi.addEventListener("change",async ()=>{
         for(const f of fi.files){
-          flash("⬆️ Laster opp …");
+          flash("Laster opp …");
           const r = await api("/api/upload?name="+encodeURIComponent(f.name),{method:"POST",body:f});
           if(r.ok){ const j=await r.json(); d.images.push({url:j.url,caption:""}); dirty=true; }
-          else flash("⚠️ Opplasting feilet");
+          else flash("Opplasting feilet");
         }
         render();
       });
-      const lbl = el("label",{class:"uplbl"},"📷 Last opp bilde(r)");
+      const lbl = el("label",{class:"uplbl"},icon("image-plus",14)," Last opp bilde(r)");
       lbl.append(fi);
       body.append(lbl);
     }
@@ -336,24 +386,24 @@ function renderDay(d, di){
     if(editing){
       body.append(el("div",{class:"erow"},
         (()=>{const t=ta(b.md,"Markdown – bruk > [!TIP] for tipsboks",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
-        el("button",{class:"mini",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},"🗑")));
+        el("button",{class:"mini",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",13))));
     } else {
       body.append(el("div",{html:md(b.md)}));
     }
   });
   if(editing){
-    body.append(el("button",{class:"add",onclick:()=>{d.blocks.push({md:"> [!TIP]\n> Nytt tips…"});render();dirty=true;}},"＋ Tips/tekstblokk"), mdHint());
+    body.append(el("button",{class:"add",onclick:()=>{d.blocks.push({md:"> [!TIP]\n> Nytt tips…"});render();dirty=true;}},icon("plus",13)," Tips/tekstblokk"), mdHint());
     body.append(el("div",{style:"margin-top:14px"},
       el("button",{class:"btn danger",onclick:()=>{
         if(confirm("Slette hele «"+d.title+"»?")){ C.days.splice(di,1); render(); dirty=true; }
-      }},"Slett dag"),
+      }},icon("trash-2",14)," Slett dag"),
       " ",
-      el("button",{class:"mini",onclick:()=>move(C.days,di,-1)},"↑ Flytt dag"),
-      el("button",{class:"mini",onclick:()=>move(C.days,di,1)},"↓ Flytt dag")));
+      el("button",{class:"mini",onclick:()=>move(C.days,di,-1)},icon("chevron-up",12)," Flytt dag"),
+      el("button",{class:"mini",onclick:()=>move(C.days,di,1)},icon("chevron-down",12)," Flytt dag")));
   }
 
   // felles notat (alltid aktivt, lagres live)
-  const nw = el("div",{class:"notes"}, el("label",{},"📝 Felles notater"));
+  const nw = el("div",{class:"notes"}, el("label",{},icon("notebook-pen",13)," Felles notater"));
   const nt = el("textarea",{placeholder:"Skriv her – synkes mellom dere…"});
   nt.value = (C.notes && C.notes[d.id]) || "";
   let timer;
@@ -385,13 +435,13 @@ function renderSection(s, si){
         b.items.forEach((it,ii)=>{
           box.append(el("div",{class:"erow"},
             el("div",{class:"ecol"},
-              el("button",{class:"mini",onclick:()=>move(b.items,ii,-1)},"↑"),
-              el("button",{class:"mini",onclick:()=>move(b.items,ii,1)},"↓")),
+              el("button",{class:"mini",onclick:()=>move(b.items,ii,-1)},icon("chevron-up",12)),
+              el("button",{class:"mini",onclick:()=>move(b.items,ii,1)},icon("chevron-down",12))),
             (()=>{const t=ta(it.text,"Punkt (markdown)",v=>it.text=v);t.classList.add("grow");return t;})(),
-            el("button",{class:"mini",onclick:()=>{b.items.splice(ii,1);render();dirty=true;}},"🗑")));
+            el("button",{class:"mini",onclick:()=>{b.items.splice(ii,1);render();dirty=true;}},icon("trash-2",13))));
         });
-        box.append(el("button",{class:"add",onclick:()=>{b.items.push({id:uid(),text:"",done:false});render();dirty=true;}},"＋ Punkt"),
-                   el("button",{class:"add",onclick:()=>{if(confirm("Slette hele sjekklisten?")){s.blocks.splice(bi,1);render();dirty=true;}}},"🗑 Slett sjekkliste"));
+        box.append(el("button",{class:"add",onclick:()=>{b.items.push({id:uid(),text:"",done:false});render();dirty=true;}},icon("plus",13)," Punkt"),
+                   el("button",{class:"add",onclick:()=>{if(confirm("Slette hele sjekklisten?")){s.blocks.splice(bi,1);render();dirty=true;}}},icon("trash-2",13)," Slett sjekkliste"));
       } else {
         if(b.title) box.append(el("h3",{},b.title));
         b.items.forEach(it=>{
@@ -412,7 +462,7 @@ function renderSection(s, si){
       if(editing){
         card.append(el("div",{class:"erow"},
           (()=>{const t=ta(b.md,"Markdown",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
-          el("button",{class:"mini",onclick:()=>{s.blocks.splice(bi,1);render();dirty=true;}},"🗑")));
+          el("button",{class:"mini",onclick:()=>{s.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",13))));
       } else {
         card.append(el("div",{html:md(b.md)}));
       }
@@ -421,16 +471,16 @@ function renderSection(s, si){
 
   if(editing){
     card.append(el("div",{style:"margin-top:10px"},
-      el("button",{class:"add",onclick:()=>{s.blocks.push({type:"md",md:""});render();dirty=true;}},"＋ Tekstblokk"),
-      el("button",{class:"add",onclick:()=>{s.blocks.push({type:"checklist",title:"",items:[{id:uid(),text:"",done:false}]});render();dirty=true;}},"＋ Sjekkliste"),
+      el("button",{class:"add",onclick:()=>{s.blocks.push({type:"md",md:""});render();dirty=true;}},icon("plus",13)," Tekstblokk"),
+      el("button",{class:"add",onclick:()=>{s.blocks.push({type:"checklist",title:"",items:[{id:uid(),text:"",done:false}]});render();dirty=true;}},icon("plus",13)," Sjekkliste"),
       mdHint(),
       el("div",{style:"margin-top:10px"},
         el("button",{class:"btn danger",onclick:()=>{
           if(confirm("Slette seksjonen «"+s.title+"»?")){ C.sections.splice(si,1); render(); dirty=true; }
-        }},"Slett seksjon"),
+        }},icon("trash-2",14)," Slett seksjon"),
         " ",
-        el("button",{class:"mini",onclick:()=>move(C.sections,si,-1)},"↑"),
-        el("button",{class:"mini",onclick:()=>move(C.sections,si,1)},"↓"))));
+        el("button",{class:"mini",onclick:()=>move(C.sections,si,-1)},icon("chevron-up",12)),
+        el("button",{class:"mini",onclick:()=>move(C.sections,si,1)},icon("chevron-down",12)))));
   }
   return card;
 }
@@ -440,13 +490,13 @@ function renderToolbar(){
   toolbar.innerHTML="";
   if(editing){
     toolbar.append(
-      el("button",{class:"btn primary",onclick:save},"💾 Lagre"),
+      el("button",{class:"btn primary",onclick:save},icon("save",15)," Lagre"),
       el("button",{class:"btn",onclick:async()=>{
         if(dirty && !confirm("Forkaste endringene?")) return;
         await load(); editing=false; dirty=false; render();
-      }},"Avbryt"));
+      }},icon("x",15)," Avbryt"));
   } else {
-    toolbar.append(el("button",{class:"btn",onclick:()=>{editing=true;render();window.scrollTo({top:0});}},"✏️ Rediger"));
+    toolbar.append(el("button",{class:"btn",onclick:()=>{editing=true;render();window.scrollTo({top:0});}},icon("pencil",15)," Rediger"));
   }
 }
 async function save(){
@@ -455,8 +505,8 @@ async function save(){
     alert("Noen andre har lagret i mellomtiden. Siden lastes på nytt – endringene dine må dessverre gjøres om.");
     await load(); editing=false; dirty=false; render(); return;
   }
-  if(r.ok){ const j=await r.json(); C.rev=j.rev; dirty=false; editing=false; render(); flash("✓ Lagret"); }
-  else flash("⚠️ Lagring feilet");
+  if(r.ok){ const j=await r.json(); C.rev=j.rev; dirty=false; editing=false; render(); flash("Lagret"); }
+  else flash("Lagring feilet");
 }
 
 /* ============ last + poll ============ */
