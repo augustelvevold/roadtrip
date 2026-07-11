@@ -27,10 +27,15 @@
   .toc-sections a{display:inline-flex;align-items:center;gap:5px;color:var(--accent);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:5px 13px;font-size:.85rem;text-decoration:none}
   .toc-sections a:hover{background:#e2ece8}
   .day,.section{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:22px 0;overflow:hidden}
-  .day-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;padding:16px 20px;background:linear-gradient(90deg,#1f6f5c,#2b8a72);color:#fff}
+  .day-head{display:flex;align-items:center;gap:10px;padding:16px 20px;background:linear-gradient(90deg,#1f6f5c,#2b8a72);color:#fff}
+  .day-head-main{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+  .day:not(.edit) .day-head{cursor:pointer}
   .day-head h2{margin:0;font-size:1.15rem}
   .day-head .date{opacity:.9;font-size:.9rem}
   .distchip{font-size:.8rem;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:2px 10px}
+  .collapse-ind{flex:none;transition:transform .2s}
+  .day.collapsed .collapse-ind{transform:rotate(-90deg)}
+  .day.collapsed .day-body{display:none}
   .day-body{padding:16px 20px 20px}
   table.sched{width:100%;border-collapse:collapse;margin:8px 0 14px}
   table.sched td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.95rem}
@@ -83,18 +88,19 @@
   button.btn{border:none;border-radius:999px;padding:9px 18px;font-size:.92rem;cursor:pointer;background:var(--chip);color:var(--accent);font-weight:600}
   button.btn.primary{background:var(--accent);color:#fff}
   button.btn.danger{background:#fdefee;color:#b3352f}
-  button.mini{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:1px 6px;font-size:.78rem;cursor:pointer;line-height:1.4}
+  button.mini{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:6px 9px;font-size:.85rem;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:34px;min-height:32px}
   button.mini:hover{color:#b3352f;border-color:#e8b7b4}
-  button.add{border:1px dashed var(--accent);background:transparent;color:var(--accent);border-radius:10px;padding:6px 14px;font-size:.88rem;cursor:pointer;margin:6px 6px 0 0}
-  .edit input[type=text], .edit textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:4px 7px;font:inherit;font-size:.92rem;background:#fffdf8;box-sizing:border-box}
-  .edit textarea{resize:vertical;min-height:24px}
-  .edit textarea.md{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
-  .erow{display:flex;gap:6px;margin:2px 0;align-items:center}
-  .erow .time{width:76px;flex:0 0 76px}
+  button.mini.del{color:#b3352f;border-color:#e8b7b4}
+  button.add{border:1px dashed var(--accent);background:transparent;color:var(--accent);border-radius:10px;padding:8px 15px;font-size:.9rem;cursor:pointer;margin:8px 6px 0 0}
+  .edit input[type=text], .edit textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font:inherit;font-size:16px;background:#fffdf8;box-sizing:border-box}
+  .edit textarea{resize:vertical;min-height:30px}
+  .edit textarea.md{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:.82rem}
+  .erow{display:flex;gap:8px;margin:8px 0;align-items:flex-start}
+  .erow .time{width:72px;flex:0 0 72px}
   .erow .grow{flex:1;min-width:0}
-  .ecol{display:flex;flex-direction:row;gap:1px;flex:none}
+  .ecol{display:flex;flex-direction:column;gap:3px;flex:none}
+  .ehead{display:flex;flex-direction:column;gap:8px;width:100%}
   .ehead input{background:rgba(255,255,255,.95)}
-  .ehead{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;width:100%}
   .mdhint{font-size:.78rem;color:var(--muted);margin-top:2px}
   .editing-banner{position:sticky;top:0;z-index:15;background:var(--accent2);color:#fff;text-align:center;padding:6px;font-size:.88rem;border-radius:0 0 10px 10px}
   #sync{position:fixed;bottom:74px;right:16px;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:19}
@@ -120,6 +126,7 @@
 let C = null;          // innholdsdokumentet fra serveren
 let editing = false;
 let dirty = false;
+let collapsed = null;  // {dagId: true/false} – kollaps-tilstand for dager (ikke lagret)
 
 const app = document.getElementById("app");
 const toolbar = document.getElementById("toolbar");
@@ -212,6 +219,24 @@ function ta(value, placeholder, oninput, cls){
 }
 function autosize(t){ t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
 function move(arr,i,dir){ const j=i+dir; if(j<0||j>=arr.length)return; [arr[i],arr[j]]=[arr[j],arr[i]]; render(); dirty=true; }
+
+/* dager som er passert kollapses automatisk ved lasting */
+const MONTHS = {januar:0,februar:1,mars:2,april:3,mai:4,juni:5,juli:6,august:7,september:8,oktober:9,november:10,desember:11};
+function dayDate(d){
+  const m = String(d && d.date || "").match(/(\d{1,2})\.?\s+(januar|februar|mars|april|mai|juni|juli|august|september|oktober|november|desember)/i);
+  if(!m) return null;
+  return new Date(new Date().getFullYear(), MONTHS[m[2].toLowerCase()], parseInt(m[1],10));
+}
+function isPastDay(d){
+  const dt = dayDate(d); if(!dt) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  return dt < today;
+}
+function initCollapse(){
+  if(collapsed) return;               // bare første gang – bevar manuelle valg
+  collapsed = {};
+  for(const d of (C.days||[])) collapsed[d.id] = isPastDay(d);
+}
 function flash(msg){
   const s=document.getElementById("sync"); s.textContent=msg||"Lagret";
   s.classList.add("show"); clearTimeout(flash.t); flash.t=setTimeout(()=>s.classList.remove("show"),1400);
@@ -224,6 +249,7 @@ async function api(url, opts){
 
 /* ============ visning ============ */
 function render(){
+  initCollapse();
   app.innerHTML="";
   banner.innerHTML="";
   if(editing) banner.append(el("div",{class:"editing-banner"},icon("pencil",13)," Redigeringsmodus – husk å lagre når du er ferdig"));
@@ -238,23 +264,25 @@ function render(){
   }
   app.append(hero);
 
-  // toc (alltid synlig)
-  const toc = el("nav",{class:"toc"});
-  for(const d of C.days){
-    const num = d.title.match(/^Dag (\d+)/)?.[1];
-    const title = d.title.replace(/^Dag \d+\s*[·\-]\s*/,"");
-    toc.append(el("a",{class:"toc-row",href:"#"+d.id},
-      el("span",{class:"toc-num"}, num ? "Dag "+num : ""),
-      el("span",{class:"toc-date"}, d.date||""),
-      el("span",{class:"toc-title"}, title)
-    ));
+  // toc (kun i visningsmodus – navigasjon kan ikke redigeres)
+  if(!editing){
+    const toc = el("nav",{class:"toc"});
+    for(const d of C.days){
+      const num = d.title.match(/^Dag (\d+)/)?.[1];
+      const title = d.title.replace(/^Dag \d+\s*[·\-]\s*/,"");
+      toc.append(el("a",{class:"toc-row",href:"#"+d.id},
+        el("span",{class:"toc-num"}, num ? "Dag "+num : ""),
+        el("span",{class:"toc-date"}, d.date||""),
+        el("span",{class:"toc-title"}, title)
+      ));
+    }
+    if(C.sections.length){
+      const sec = el("div",{class:"toc-sections"});
+      for(const s of C.sections) sec.append(el("a",{href:"#"+s.id}, icon("link",13), s.title));
+      toc.append(sec);
+    }
+    app.append(toc);
   }
-  if(C.sections.length){
-    const sec = el("div",{class:"toc-sections"});
-    for(const s of C.sections) sec.append(el("a",{href:"#"+s.id}, icon("link",13), s.title));
-    toc.append(sec);
-  }
-  app.append(toc);
 
   // intro
   if(editing){
@@ -310,8 +338,18 @@ function renderDay(d, di){
       inp(d.chip,"Merkelapp (f.eks. ~230 km)",v=>d.chip=v));
     head.append(grid);
   } else {
-    head.append(el("h2",{},d.title), el("span",{class:"date"},d.date||""));
-    if(d.chip) head.append(el("span",{class:"distchip"},d.chip));
+    const main = el("div",{class:"day-head-main"},
+      el("h2",{},d.title), el("span",{class:"date"},d.date||""));
+    if(d.chip) main.append(el("span",{class:"distchip"},d.chip));
+    const chev = icon("chevron-down",22);
+    if(chev.classList) chev.classList.add("collapse-ind");
+    head.append(main, chev);
+    if(collapsed[d.id]) card.classList.add("collapsed");
+    head.addEventListener("click",()=>{
+      const now = !card.classList.contains("collapsed");
+      card.classList.toggle("collapsed", now);
+      collapsed[d.id] = now;
+    });
   }
   card.append(head);
   const body = el("div",{class:"day-body"});
@@ -325,7 +363,7 @@ function renderDay(d, di){
           el("button",{class:"mini",title:"Flytt ned",onclick:()=>move(d.rows,ri,1)},icon("chevron-down",12))),
         (()=>{const i=inp(r.time,"kl.",v=>r.time=v);i.classList.add("time");return i;})(),
         (()=>{const t=ta(r.text,"Beskrivelse (markdown)",v=>r.text=v);t.classList.add("grow");return t;})(),
-        el("button",{class:"mini",title:"Slett rad",onclick:()=>{d.rows.splice(ri,1);render();dirty=true;}},icon("trash-2",13))
+        el("button",{class:"mini del",title:"Slett rad",onclick:()=>{d.rows.splice(ri,1);render();dirty=true;}},icon("trash-2",16))
       ));
     });
     body.append(el("button",{class:"add",onclick:()=>{d.rows.push({time:"",text:""});render();dirty=true;}},icon("plus",13)," Rad"));
@@ -346,7 +384,7 @@ function renderDay(d, di){
       body.append(el("div",{class:"erow"},
         (()=>{const i=inp(m.label,"Etikett",v=>m.label=v);i.classList.add("grow");return i;})(),
         (()=>{const i=inp(m.url,"https://maps.apple.com/…",v=>m.url=v);i.classList.add("grow");return i;})(),
-        el("button",{class:"mini",onclick:()=>{d.maps.splice(mi,1);render();dirty=true;}},icon("trash-2",13))));
+        el("button",{class:"mini del",onclick:()=>{d.maps.splice(mi,1);render();dirty=true;}},icon("trash-2",16))));
     });
     body.append(el("button",{class:"add",onclick:()=>{d.maps.push({label:"",url:""});render();dirty=true;}},icon("plus",13)," Kartlenke"));
   } else if(d.maps.length){
@@ -360,7 +398,7 @@ function renderDay(d, di){
     const g = el("div",{class:"imgs"});
     d.images.forEach((im,ii)=>{
       const w = el("div",{class:"imgwrap"}, el("img",{src:im.url,alt:im.caption||"",loading:"lazy"}));
-      if(editing) w.append(el("button",{class:"mini imgdel",onclick:()=>{d.images.splice(ii,1);render();dirty=true;}},icon("trash-2",13)));
+      if(editing) w.append(el("button",{class:"mini del imgdel",onclick:()=>{d.images.splice(ii,1);render();dirty=true;}},icon("trash-2",16)));
       g.append(w);
     });
     body.append(g);
@@ -386,7 +424,7 @@ function renderDay(d, di){
     if(editing){
       body.append(el("div",{class:"erow"},
         (()=>{const t=ta(b.md,"Markdown – bruk > [!TIP] for tipsboks",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
-        el("button",{class:"mini",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",13))));
+        el("button",{class:"mini del",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",16))));
     } else {
       body.append(el("div",{html:md(b.md)}));
     }
@@ -438,10 +476,10 @@ function renderSection(s, si){
               el("button",{class:"mini",onclick:()=>move(b.items,ii,-1)},icon("chevron-up",12)),
               el("button",{class:"mini",onclick:()=>move(b.items,ii,1)},icon("chevron-down",12))),
             (()=>{const t=ta(it.text,"Punkt (markdown)",v=>it.text=v);t.classList.add("grow");return t;})(),
-            el("button",{class:"mini",onclick:()=>{b.items.splice(ii,1);render();dirty=true;}},icon("trash-2",13))));
+            el("button",{class:"mini del",onclick:()=>{b.items.splice(ii,1);render();dirty=true;}},icon("trash-2",16))));
         });
         box.append(el("button",{class:"add",onclick:()=>{b.items.push({id:uid(),text:"",done:false});render();dirty=true;}},icon("plus",13)," Punkt"),
-                   el("button",{class:"add",onclick:()=>{if(confirm("Slette hele sjekklisten?")){s.blocks.splice(bi,1);render();dirty=true;}}},icon("trash-2",13)," Slett sjekkliste"));
+                   el("button",{class:"add",onclick:()=>{if(confirm("Slette hele sjekklisten?")){s.blocks.splice(bi,1);render();dirty=true;}}},icon("trash-2",16)," Slett sjekkliste"));
       } else {
         if(b.title) box.append(el("h3",{},b.title));
         b.items.forEach(it=>{
@@ -462,7 +500,7 @@ function renderSection(s, si){
       if(editing){
         card.append(el("div",{class:"erow"},
           (()=>{const t=ta(b.md,"Markdown",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
-          el("button",{class:"mini",onclick:()=>{s.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",13))));
+          el("button",{class:"mini del",onclick:()=>{s.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",16))));
       } else {
         card.append(el("div",{html:md(b.md)}));
       }
