@@ -35,6 +35,7 @@
   .distchip{font-size:.8rem;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:2px 10px}
   .collapse-ind{flex:none;transition:transform .2s}
   .day.collapsed .collapse-ind{transform:rotate(-90deg)}
+  .day-collapse-btn{flex:none;background:transparent;border:none;color:#fff;cursor:pointer;padding:4px;display:inline-flex;align-items:center}
   .day.collapsed .day-body{display:none}
   .day-body{padding:16px 20px 20px}
   table.sched{width:100%;border-collapse:collapse;margin:8px 0 14px}
@@ -336,7 +337,15 @@ function renderDay(d, di){
       inp(d.title,"Tittel",v=>d.title=v),
       inp(d.date,"Dato (f.eks. Lørdag 18. juli)",v=>d.date=v),
       inp(d.chip,"Merkelapp (f.eks. ~230 km)",v=>d.chip=v));
-    head.append(grid);
+    const chev = icon("chevron-down",22);
+    if(chev.classList) chev.classList.add("collapse-ind");
+    const toggle = el("button",{class:"day-collapse-btn",title:"Fold inn/ut",onclick:()=>{
+      const now = !card.classList.contains("collapsed");
+      card.classList.toggle("collapsed", now);
+      collapsed[d.id] = now;
+    }}, chev);
+    head.append(grid, toggle);
+    if(collapsed[d.id]) card.classList.add("collapsed");
   } else {
     const main = el("div",{class:"day-head-main"},
       el("h2",{},d.title), el("span",{class:"date"},d.date||""));
