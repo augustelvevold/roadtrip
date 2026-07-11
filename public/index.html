@@ -112,6 +112,7 @@
 
   /* redigeringsmodus */
   .toolbar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:20;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:999px;padding:8px 10px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+  .toolbar:empty{display:none}
   button.btn{border:none;border-radius:999px;padding:9px 18px;font-size:.92rem;cursor:pointer;background:var(--chip);color:var(--accent);font-weight:600}
   button.btn.primary{background:var(--accent);color:#fff}
   button.btn.danger{background:#fdefee;color:#b3352f}
@@ -133,6 +134,19 @@
   #sync{position:fixed;bottom:74px;right:16px;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:19}
   #sync.show{opacity:1}
   .uplbl{display:inline-block;border:1px dashed var(--accent);color:var(--accent);border-radius:10px;padding:6px 14px;font-size:.88rem;cursor:pointer;margin-top:6px}
+  /* inline per-dag/seksjon-redigering */
+  .editbtn{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .editbtn:hover{color:var(--accent);border-color:var(--accent)}
+  .day-head .editbtn{border-color:rgba(255,255,255,.45);color:#fff;background:rgba(255,255,255,.12)}
+  .dayhead-btns{display:flex;flex-direction:column;align-items:center;gap:8px;flex:none}
+  .collapse-all-wrap{display:flex;justify-content:flex-end;margin:16px 2px -8px}
+  .collapse-all{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .collapse-all:hover{color:var(--accent);border-color:var(--accent)}
+  .editctl{display:flex;gap:8px;margin-bottom:14px}
+  .sechead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .sechead h2{margin:0;flex:1}
+  .introwrap,.footerwrap{position:relative;min-height:30px}
+  .introwrap>.editbtn,.footerwrap>.editbtn{position:absolute;top:0;right:0;z-index:2}
   .lucide{display:inline-block;vertical-align:middle;flex-shrink:0;pointer-events:none}
   button .lucide, label .lucide, a .lucide{margin-right:4px}
   button.mini .lucide{margin-right:0}
@@ -151,7 +165,9 @@
 "use strict";
 /* ============ tilstand ============ */
 let C = null;          // innholdsdokumentet fra serveren
-let editing = false;
+let editing = false;   // settes per element under render (editId===elementets id)
+let editId = null;     // id-en til dagen/seksjonen som redigeres nå (eller 'hero'/'intro'/'footer'), null = ingenting
+let scrollAnchor = null; // engangs-anker for å bevare scroll ved neste render
 let dirty = false;
 let collapsed = null;  // {dagId: true/false} – kollaps-tilstand for dager (ikke lagret)
 
@@ -274,25 +290,57 @@ async function api(url, opts){
   return r;
 }
 
+/* ============ inline-redigering: knapper, kontroller, scroll-bevaring ============ */
+function editBtn(id){
+  return el("button",{class:"editbtn",title:"Rediger",onclick:(e)=>{e.stopPropagation();startEdit(id);}},icon("pencil",15));
+}
+function renderEditBar(){
+  toolbar.innerHTML="";
+  if(!editId) return;
+  toolbar.append(
+    el("button",{class:"btn primary",onclick:()=>saveEdit(editId)},icon("save",15)," Lagre"),
+    el("button",{class:"btn",onclick:()=>cancelEdit(editId)},icon("x",15)," Avbryt"));
+}
+function startEdit(id){
+  if(editId && editId!==id && dirty && !confirm("Du har ulagrede endringer. Forkaste dem og redigere noe annet?")) return;
+  editId = id; dirty = false;
+  if(collapsed && id in collapsed) collapsed[id]=false;  // vis dagen
+  render();  // editId er anker → scroll bevares
+}
+async function saveEdit(id){
+  const r = await api("/api/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(C)});
+  if(r.status===409){
+    alert("Noen andre har lagret i mellomtiden. Siden lastes på nytt – endringene dine må dessverre gjøres om.");
+    await load(); editId=null; dirty=false; render(); return;
+  }
+  if(r.ok){ const j=await r.json(); C.rev=j.rev; dirty=false; editId=null; scrollAnchor=id; render(); flash("Lagret"); }
+  else flash("Lagring feilet");
+}
+async function cancelEdit(id){
+  if(dirty && !confirm("Forkaste endringene?")) return;
+  await load(); editId=null; dirty=false; scrollAnchor=id; render();
+}
+
 /* ============ visning ============ */
 function render(){
+  const aid = scrollAnchor || editId;
+  const before = aid ? document.getElementById(aid)?.getBoundingClientRect().top : null;
   initCollapse();
   app.innerHTML="";
   banner.innerHTML="";
-  if(editing) banner.append(el("div",{class:"editing-banner"},icon("pencil",13)," Redigeringsmodus – husk å lagre når du er ferdig"));
 
-  // hero
-  const hero = el("header",{class:"hero"});
+  // hero (tittel)
+  editing = (editId==='hero');
+  const hero = el("header",{class:"hero"+(editing?" edit":""),id:"hero"});
   if(editing){
-    hero.classList.add("edit");
     hero.append(inp(C.hero.title,"Tittel",v=>C.hero.title=v));
   } else {
-    hero.append(el("h1",{},C.hero.title));
+    hero.append(el("h1",{},C.hero.title), editBtn('hero'));
   }
   app.append(hero);
 
-  // toc (kun i visningsmodus – navigasjon kan ikke redigeres)
-  if(!editing){
+  // toc (kun når ingenting redigeres)
+  if(!editId){
     const toc = el("nav",{class:"toc"});
     for(const d of C.days){
       const num = d.title.match(/^Dag (\d+)/)?.[1];
@@ -312,43 +360,67 @@ function render(){
   }
 
   // intro
+  editing = (editId==='intro');
   if(editing){
-    const box = el("div",{class:"section edit"});
-    box.append(el("h2",{},"Intro-melding (markdown)"), ta(C.intro,"",v=>C.intro=v,"md"), mdHint());
+    const box = el("div",{class:"section edit",id:"intro"});
+    box.append(el("h2",{},"Intro (markdown)"), ta(C.intro,"",v=>C.intro=v,"md"), mdHint());
     app.append(box);
-  } else if(C.intro){
-    app.append(el("div",{html:md(C.intro)}));
+  } else {
+    const wrap = el("div",{class:"introwrap",id:"intro"});
+    if(!editId) wrap.append(editBtn('intro'));
+    if(C.intro) wrap.append(el("div",{html:md(C.intro)}));
+    app.append(wrap);
+  }
+
+  // åpne/kollaps alle dager (kun i visning)
+  if(!editId && C.days.length){
+    const anyOpen = C.days.some(d=>!collapsed[d.id]);
+    app.append(el("div",{class:"collapse-all-wrap"},
+      el("button",{class:"collapse-all",onclick:()=>{
+        for(const d of C.days) collapsed[d.id]=anyOpen;
+        render();
+      }}, icon(anyOpen?"chevrons-down-up":"chevrons-up-down",14), anyOpen?" Kollaps alle":" Åpne alle")));
   }
 
   // dager
-  C.days.forEach((d,di)=>app.append(renderDay(d,di)));
-  if(editing){
-    app.append(el("button",{class:"add",onclick:()=>{
-      C.days.push({id:uid(),title:"Dag "+(C.days.length+1)+" · Ny dag",date:"",chip:"",rows:[{time:"09:00",text:"…"}],maps:[],images:[],blocks:[]});
-      render(); dirty=true;
-    }},icon("plus",13)," Legg til dag"));
-  }
+  C.days.forEach((d,di)=>{ editing=(editId===d.id); app.append(renderDay(d,di)); });
+  editing=false;
+  if(!editId) app.append(el("button",{class:"add",onclick:()=>{
+    const nd={id:uid(),title:"Dag "+(C.days.length+1)+" · Ny dag",date:"",chip:"",rows:[{time:"09:00",text:"…"}],maps:[],images:[],blocks:[],bookings:[]};
+    C.days.push(nd); collapsed[nd.id]=false; editId=nd.id; dirty=true; render();
+  }},icon("plus",13)," Legg til dag"));
 
   // seksjoner
-  C.sections.forEach((s,si)=>app.append(renderSection(s,si)));
-  if(editing){
-    app.append(el("button",{class:"add",onclick:()=>{
-      C.sections.push({id:uid(),title:"Ny seksjon",blocks:[{type:"md",md:"Skriv her…"}]});
-      render(); dirty=true;
-    }},icon("plus",13)," Legg til seksjon"));
-  }
+  C.sections.forEach((s,si)=>{ editing=(editId===s.id); app.append(renderSection(s,si)); });
+  editing=false;
+  if(!editId) app.append(el("button",{class:"add",onclick:()=>{
+    const ns={id:uid(),title:"Ny seksjon",blocks:[{type:"md",md:"Skriv her…"}]};
+    C.sections.push(ns); editId=ns.id; dirty=true; render();
+  }},icon("plus",13)," Legg til seksjon"));
 
   // footer
+  editing = (editId==='footer');
   if(editing){
-    const f = el("div",{class:"section edit"});
+    const f = el("div",{class:"section edit",id:"footer"});
     f.append(el("h2",{},"Bunntekst (markdown)"), ta(C.footer,"",v=>C.footer=v,"md"));
     app.append(f);
-  } else if(C.footer){
-    app.append(el("footer",{html:md(C.footer)}));
+  } else {
+    const wrap = el("div",{class:"footerwrap",id:"footer"});
+    if(!editId) wrap.append(editBtn('footer'));
+    if(C.footer) wrap.append(el("footer",{html:md(C.footer)}));
+    app.append(wrap);
   }
+  editing=false;
 
-  renderToolbar();
-  if(editing) requestAnimationFrame(()=>app.querySelectorAll("textarea").forEach(autosize));
+  renderEditBar();
+  requestAnimationFrame(()=>{
+    if(editId) app.querySelectorAll("textarea").forEach(autosize);
+    if(aid && before!=null){
+      const elNow = document.getElementById(aid);
+      if(elNow){ const after = elNow.getBoundingClientRect().top; window.scrollBy(0, after-before); }
+    }
+    scrollAnchor=null;
+  });
 }
 
 function mdHint(){
@@ -442,24 +514,17 @@ function renderDay(d, di){
       inp(d.title,"Tittel",v=>d.title=v),
       inp(d.date,"Dato (f.eks. Lørdag 18. juli)",v=>d.date=v),
       inp(d.chip,"Merkelapp (f.eks. ~230 km)",v=>d.chip=v));
-    const chev = icon("chevron-down",22);
-    if(chev.classList) chev.classList.add("collapse-ind");
-    const toggle = el("button",{class:"day-collapse-btn",title:"Fold inn/ut",onclick:()=>{
-      const now = !card.classList.contains("collapsed");
-      card.classList.toggle("collapsed", now);
-      collapsed[d.id] = now;
-    }}, chev);
-    head.append(grid, toggle);
-    if(collapsed[d.id]) card.classList.add("collapsed");
+    head.append(grid);
   } else {
     const main = el("div",{class:"day-head-main"},
       el("h2",{},d.title), el("span",{class:"date"},d.date||""));
     if(d.chip) main.append(el("span",{class:"distchip"},d.chip));
     const chev = icon("chevron-down",22);
     if(chev.classList) chev.classList.add("collapse-ind");
-    head.append(main, chev);
+    head.append(main, el("div",{class:"dayhead-btns"}, chev, editBtn(d.id)));
     if(collapsed[d.id]) card.classList.add("collapsed");
-    head.addEventListener("click",()=>{
+    head.addEventListener("click",(e)=>{
+      if(e.target.closest(".editbtn")) return;
       const now = !card.classList.contains("collapsed");
       card.classList.toggle("collapsed", now);
       collapsed[d.id] = now;
@@ -608,7 +673,7 @@ function renderSection(s, si){
   if(editing){
     card.append(inp(s.title,"Seksjonstittel",v=>s.title=v));
   } else {
-    card.append(el("h2",{},s.title));
+    card.append(el("div",{class:"sechead"}, el("h2",{},s.title), editBtn(s.id)));
   }
 
   s.blocks.forEach((b,bi)=>{
@@ -683,37 +748,13 @@ function renderSection(s, si){
   return card;
 }
 
-/* ============ toolbar / lagring ============ */
-function renderToolbar(){
-  toolbar.innerHTML="";
-  if(editing){
-    toolbar.append(
-      el("button",{class:"btn primary",onclick:save},icon("save",15)," Lagre"),
-      el("button",{class:"btn",onclick:async()=>{
-        if(dirty && !confirm("Forkaste endringene?")) return;
-        await load(); editing=false; dirty=false; render();
-      }},icon("x",15)," Avbryt"));
-  } else {
-    toolbar.append(el("button",{class:"btn",onclick:()=>{editing=true;render();window.scrollTo({top:0});}},icon("pencil",15)," Rediger"));
-  }
-}
-async function save(){
-  const r = await api("/api/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(C)});
-  if(r.status===409){
-    alert("Noen andre har lagret i mellomtiden. Siden lastes på nytt – endringene dine må dessverre gjøres om.");
-    await load(); editing=false; dirty=false; render(); return;
-  }
-  if(r.ok){ const j=await r.json(); C.rev=j.rev; dirty=false; editing=false; render(); flash("Lagret"); }
-  else flash("Lagring feilet");
-}
-
 /* ============ last + poll ============ */
 async function load(){
   const r = await api("/api/content");
   C = await r.json();
 }
 async function poll(){
-  if(editing) return; // ikke overskriv mens man redigerer
+  if(editId) return; // ikke overskriv mens man redigerer
   try{
     const r = await api("/api/content");
     const fresh = await r.json();
