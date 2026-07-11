@@ -31,6 +31,16 @@ function findBooking(c, id) {
   return null;
 }
 
+// Finn et sjekklistepunkt (pakkeliste/booking-sjekkliste) på id.
+function findCheckItem(c, id) {
+  for (const s of c.sections || []) for (const b of s.blocks || []) {
+    if (b.type !== "checklist" || !Array.isArray(b.items)) continue;
+    const idx = b.items.findIndex((x) => x.id === id);
+    if (idx >= 0) return { list: b.items, idx, item: b.items[idx] };
+  }
+  return null;
+}
+
 // Bygger en fersk McpServer med alle verktøyene registrert.
 // I stateless modus lager vi én server + transport per request,
 // så dette kalles på hvert POST-kall (billig – to brukere totalt).
@@ -61,10 +71,16 @@ function buildServer(store) {
   server.registerTool(
     "oppdater_plan",
     {
-      title: "Oppdater reiseplan",
+      title: "Oppdater hele planen (siste utvei)",
       description:
-        "Erstatt hele reiseplanen med et nytt dokument. Hent planen med hent_plan først, gjør endringene dine, og send HELE det oppdaterte dokumentet tilbake her. Ikke utelat felter du ikke endret.\n\n" +
-        "Bestillinger: en booking er { id, title, kind, url, location, ref, date, amount, paid, email } der kind er en av 'overnatting'|'transport'|'aktivitet'|'mat'|'annet' og location er en adresse eller kartlenke. De kan ligge (a) globalt i en section-blokk { type:'bookings', title, items:[...] }, eller (b) på en dag i days[].bookings:[...]. For enkeltendringer er legg_til_bestilling / rediger_bestilling / oppdater_dag mye raskere.",
+        "SISTE UTVEI – treg, fordi hele planen (~20 KB) må skrives om. Bruk KUN for strukturelle endringer som ingen av de spesifikke verktøyene dekker: legge til / fjerne / omorganisere hele dager eller seksjoner, eller endre hero/intro/footer.\n\n" +
+        "For ALT annet, bruk de raske verktøyene i stedet:\n" +
+        "• Endre én dag (tidsplan/rader, dato, tittel, merkelapp, tips, kartlenker): oppdater_dag\n" +
+        "• Bestillinger: legg_til_bestilling / rediger_bestilling / merk_betalt / slett_bestilling\n" +
+        "• Sjekklister (pakkeliste, booking-sjekkliste): legg_til_punkt / rediger_punkt / slett_punkt / kryss_av\n" +
+        "• Dagsnotat: sett_notat\n\n" +
+        "Hvis du likevel bruker denne: hent planen med hent_plan først, gjør endringene, og send HELE dokumentet tilbake – ikke utelat felter.\n\n" +
+        "Datamodell for bestillinger: { id, title, kind, url, location, ref, date, amount, paid, email }, kind ∈ overnatting|transport|aktivitet|mat|annet, location = adresse/kartlenke. Ligger enten globalt i section-blokk { type:'bookings', items:[...] } eller på en dag i days[].bookings:[...].",
       inputSchema: {
         plan: z
           .object({
@@ -284,6 +300,68 @@ function buildServer(store) {
       found.list.splice(found.idx, 1);
       const rev = store.replaceContent(c);
       return { content: [{ type: "text", text: `Bestilling ${id} slettet (rev ${rev}).` }] };
+    }
+  );
+
+  // --- Verktøy 10: legg til sjekklistepunkt --------------------
+  server.registerTool(
+    "legg_til_punkt",
+    {
+      title: "Legg til sjekklistepunkt",
+      description:
+        "Legg til et nytt punkt i samme sjekkliste som et eksisterende punkt. Oppgi id-en til et punkt som allerede finnes i lista (f.eks. 'bk13' for booking-sjekklista, 'pk10' for en pakkeliste-gruppe), så havner det nye punktet nederst i den samme lista. Teksten kan bruke markdown.",
+      inputSchema: {
+        i_samme_liste_som: z.string().describe("id-en til et punkt i mål-lista, f.eks. 'bk13'"),
+        tekst: z.string().describe("punktteksten (markdown ok)"),
+      },
+    },
+    async ({ i_samme_liste_som, tekst }) => {
+      const c = store.getContent();
+      const found = findCheckItem(c, i_samme_liste_som);
+      if (!found) return { content: [{ type: "text", text: `Fant ingen sjekkliste med punkt-id ${i_samme_liste_som}.` }], isError: true };
+      const nyId = "i" + Math.random().toString(36).slice(2, 9);
+      found.list.push({ id: nyId, text: tekst, done: false });
+      const rev = store.replaceContent(c);
+      return { content: [{ type: "text", text: `La til punkt ${nyId} (rev ${rev}).` }] };
+    }
+  );
+
+  // --- Verktøy 11: rediger teksten på et sjekklistepunkt -------
+  server.registerTool(
+    "rediger_punkt",
+    {
+      title: "Rediger sjekklistepunkt",
+      description: "Endre teksten på et sjekklistepunkt (finn id med hent_plan). For å huke av/på, bruk kryss_av.",
+      inputSchema: {
+        id: z.string().describe("punktets id, f.eks. 'bk05'"),
+        tekst: z.string().describe("ny tekst (markdown ok)"),
+      },
+    },
+    async ({ id, tekst }) => {
+      const c = store.getContent();
+      const found = findCheckItem(c, id);
+      if (!found) return { content: [{ type: "text", text: `Fant ingen punkt med id ${id}.` }], isError: true };
+      found.item.text = tekst;
+      const rev = store.replaceContent(c);
+      return { content: [{ type: "text", text: `Punkt ${id} oppdatert (rev ${rev}).` }] };
+    }
+  );
+
+  // --- Verktøy 12: slett et sjekklistepunkt --------------------
+  server.registerTool(
+    "slett_punkt",
+    {
+      title: "Slett sjekklistepunkt",
+      description: "Fjern et sjekklistepunkt (finn id med hent_plan).",
+      inputSchema: { id: z.string().describe("punktets id") },
+    },
+    async ({ id }) => {
+      const c = store.getContent();
+      const found = findCheckItem(c, id);
+      if (!found) return { content: [{ type: "text", text: `Fant ingen punkt med id ${id}.` }], isError: true };
+      found.list.splice(found.idx, 1);
+      const rev = store.replaceContent(c);
+      return { content: [{ type: "text", text: `Punkt ${id} slettet (rev ${rev}).` }] };
     }
   );
 
