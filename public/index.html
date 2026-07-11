@@ -79,6 +79,24 @@
   .imgs img{width:100%;border-radius:12px;display:block;border:1px solid var(--line)}
   .imgdel{position:absolute;top:8px;right:8px}
 
+  /* bestillinger & betalinger */
+  .bookings{display:flex;flex-direction:column;gap:10px;margin:10px 0}
+  .bk{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fbfaf7}
+  .bk-head{display:flex;align-items:center;gap:8px}
+  .bk-title{font-weight:600;color:var(--accent);text-decoration:none}
+  .bk-title:hover{text-decoration:underline}
+  .bk-paid{margin-left:auto;font-size:.78rem;color:var(--accent);background:var(--chip);border-radius:999px;padding:2px 10px;display:inline-flex;align-items:center;gap:3px}
+  .bk-unpaid{margin-left:auto;font-size:.78rem;color:var(--accent2);border:1px solid #f0d3bd;border-radius:999px;padding:2px 10px}
+  .bk-meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:.85rem;color:var(--muted)}
+  .bk-meta a{color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+  .bk.edit{display:flex;flex-direction:column;gap:7px}
+  .bk-grid{display:flex;gap:7px}
+  .bk-grid>*{flex:1;min-width:0}
+  .bk-tools{display:flex;gap:6px;justify-content:flex-end}
+  .bk-kind{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font:inherit;font-size:16px;background:#fffdf8;box-sizing:border-box}
+  .bk-paidbox{font-size:.95rem;color:var(--ink);display:flex;align-items:center;gap:8px;padding:2px 0}
+  .bk-paidbox input{width:20px;height:20px;accent-color:var(--accent)}
+
   /* notater */
   .notes{margin-top:14px}
   .notes label{font-size:.85rem;color:var(--muted);display:block;margin-bottom:4px}
@@ -329,6 +347,66 @@ function mdHint(){
   return el("div",{class:"mdhint"},"Markdown: **fet**, [lenke](url), - liste, > [!TIP] / [!NOTE] / [!WARNING] for tips-bokser");
 }
 
+/* ============ bestillinger & betalinger ============ */
+const BOOKING_KINDS = [
+  ["overnatting","Overnatting","bed"],
+  ["transport","Transport","car"],
+  ["aktivitet","Aktivitet","ticket"],
+  ["mat","Servering","utensils"],
+  ["annet","Annet","receipt"],
+];
+function kindMeta(kind){ return BOOKING_KINDS.find(k=>k[0]===kind) || BOOKING_KINDS[BOOKING_KINDS.length-1]; }
+
+function bookingCardView(b){
+  const card = el("div",{class:"bk"});
+  const head = el("div",{class:"bk-head"}, icon(kindMeta(b.kind)[2],17));
+  head.append(b.url
+    ? el("a",{class:"bk-title",href:b.url,target:"_blank",rel:"noopener"}, b.title||"(uten navn)")
+    : el("span",{class:"bk-title"}, b.title||"(uten navn)"));
+  if(b.paid) head.append(el("span",{class:"bk-paid"}, icon("check",13)," Betalt"));
+  else if(b.amount) head.append(el("span",{class:"bk-unpaid"}, "Ikke betalt"));
+  card.append(head);
+  const meta = el("div",{class:"bk-meta"});
+  if(b.date) meta.append(el("span",{}, b.date));
+  if(b.amount) meta.append(el("span",{}, b.amount));
+  if(b.ref) meta.append(el("span",{}, "Ref: "+b.ref));
+  if(b.email) meta.append(el("a",{href:b.email,target:"_blank",rel:"noopener"}, icon("mail",12)," E-post"));
+  if(meta.children.length) card.append(meta);
+  return card;
+}
+
+function bookingCardEdit(b, list, i){
+  const card = el("div",{class:"bk edit"});
+  card.append(el("div",{class:"bk-tools"},
+    el("button",{class:"mini",title:"Flytt opp",onclick:()=>move(list,i,-1)},icon("chevron-up",14)),
+    el("button",{class:"mini",title:"Flytt ned",onclick:()=>move(list,i,1)},icon("chevron-down",14)),
+    el("button",{class:"mini del",title:"Slett",onclick:()=>{list.splice(i,1);render();dirty=true;}},icon("trash-2",16))
+  ));
+  card.append(inp(b.title,"Tittel (f.eks. Airbnb – Stavanger)",v=>b.title=v));
+  const sel = el("select",{class:"bk-kind",onchange:e=>{b.kind=e.target.value;dirty=true;}});
+  for(const [val,label] of BOOKING_KINDS){ const o=el("option",{value:val},label); if((b.kind||"overnatting")===val)o.selected=true; sel.append(o); }
+  card.append(el("div",{class:"bk-grid"}, sel, inp(b.date,"Dato",v=>b.date=v)));
+  card.append(inp(b.url,"Lenke (Airbnb/booking)",v=>b.url=v));
+  card.append(el("div",{class:"bk-grid"}, inp(b.ref,"Ref/bekreftelse",v=>b.ref=v), inp(b.amount,"Beløp",v=>b.amount=v)));
+  card.append(inp(b.email,"E-post-lenke (valgfri)",v=>b.email=v));
+  const pl = el("label",{class:"bk-paidbox"});
+  const cb = el("input",{type:"checkbox"}); cb.checked=!!b.paid;
+  cb.addEventListener("change",()=>{b.paid=cb.checked;dirty=true;});
+  pl.append(cb, "Betalt");
+  card.append(pl);
+  return card;
+}
+
+function bookingsList(list){
+  const wrap = el("div",{class:"bookings"});
+  (list||[]).forEach((b,i)=> wrap.append(editing ? bookingCardEdit(b,list,i) : bookingCardView(b)));
+  if(editing) wrap.append(el("button",{class:"add",onclick:()=>{
+    list.push({id:uid(),title:"",kind:"overnatting",url:"",ref:"",date:"",amount:"",paid:false,email:""});
+    render(); dirty=true;
+  }}, icon("plus",13)," Bestilling"));
+  return wrap;
+}
+
 function renderDay(d, di){
   const card = el("div",{class:"day"+(editing?" edit":""),id:d.id});
   const head = el("div",{class:"day-head"});
@@ -400,6 +478,13 @@ function renderDay(d, di){
     const m = el("div",{class:"maps"});
     for(const l of d.maps) m.append(el("a",{href:l.url,target:"_blank",rel:"noopener"},l.label));
     body.append(m);
+  }
+
+  // bestillinger på dagen
+  if((d.bookings && d.bookings.length) || editing){
+    if(editing) d.bookings = d.bookings || [];
+    body.append(el("h3",{},"Bestillinger"));
+    body.append(bookingsList(d.bookings));
   }
 
   // bilder
@@ -505,6 +590,19 @@ function renderSection(s, si){
         });
       }
       card.append(box);
+    } else if(b.type==="bookings"){
+      const box = el("div",{});
+      if(editing){
+        box.append(el("div",{style:"margin:14px 0 4px"}, inp(b.title,"Gruppetittel (valgfri)",v=>b.title=v)));
+      } else if(b.title){
+        box.append(el("h3",{},b.title));
+      }
+      b.items = b.items || [];
+      box.append(bookingsList(b.items));
+      if(editing){
+        box.append(el("button",{class:"add",onclick:()=>{if(confirm("Slette hele bestillings-blokken?")){s.blocks.splice(bi,1);render();dirty=true;}}},icon("trash-2",16)," Slett blokk"));
+      }
+      card.append(box);
     } else { // md
       if(editing){
         card.append(el("div",{class:"erow"},
@@ -520,6 +618,7 @@ function renderSection(s, si){
     card.append(el("div",{style:"margin-top:10px"},
       el("button",{class:"add",onclick:()=>{s.blocks.push({type:"md",md:""});render();dirty=true;}},icon("plus",13)," Tekstblokk"),
       el("button",{class:"add",onclick:()=>{s.blocks.push({type:"checklist",title:"",items:[{id:uid(),text:"",done:false}]});render();dirty=true;}},icon("plus",13)," Sjekkliste"),
+      el("button",{class:"add",onclick:()=>{s.blocks.push({type:"bookings",title:"",items:[]});render();dirty=true;}},icon("plus",13)," Bestillinger"),
       mdHint(),
       el("div",{style:"margin-top:10px"},
         el("button",{class:"btn danger",onclick:()=>{
