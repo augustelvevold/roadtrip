@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadtrip 2026</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#2b2a26; --muted:#7a766c;
+    --accent:#1f6f5c; --accent2:#c2571f; --line:#e5e1d8; --chip:#eef3f1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+  .wrap{max-width:860px;margin:0 auto;padding:24px 16px 120px}
+  header.hero{text-align:center;padding:36px 12px 20px}
+  header.hero h1{font-size:1.9rem;margin:0 0 6px}
+  header.hero p{color:var(--muted);margin:4px 0}
+  .badge{display:inline-block;background:var(--accent);color:#fff;border-radius:999px;padding:4px 14px;font-size:.85rem;margin-top:10px}
+  nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin:20px 0}
+  nav.toc a{color:var(--accent);text-decoration:none;margin-right:14px;font-size:.92rem;display:inline-block;padding:2px 0}
+  .day,.section{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:22px 0;overflow:hidden}
+  .day-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;padding:16px 20px;background:linear-gradient(90deg,#1f6f5c,#2b8a72);color:#fff}
+  .day-head h2{margin:0;font-size:1.15rem}
+  .day-head .date{opacity:.9;font-size:.9rem}
+  .distchip{font-size:.8rem;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:2px 10px}
+  .day-body{padding:16px 20px 20px}
+  table.sched{width:100%;border-collapse:collapse;margin:8px 0 14px}
+  table.sched td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.95rem}
+  table.sched td.t{white-space:nowrap;font-weight:600;color:var(--accent);width:92px}
+  table.sched td p{margin:0}
+  .maps a{display:inline-block;background:var(--chip);border:1px solid var(--line);color:var(--accent);text-decoration:none;border-radius:10px;padding:8px 14px;margin:4px 6px 4px 0;font-size:.9rem}
+  .maps a:hover{background:#e2ece8}
+  .section{padding:20px}
+  .section h2{margin:0 0 10px;font-size:1.2rem;color:var(--accent)}
+  .section h3, .day-body h3{margin:16px 0 6px;font-size:1.02rem}
+  ul{margin:6px 0 12px;padding-left:22px}
+  li{margin:3px 0}
+  li p{margin:0;display:inline}
+  a{color:var(--accent)}
+  footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:36px}
+  footer p{margin:4px 0}
+
+  /* admonitions (markdown > [!TIP] osv.) */
+  .adm{border-radius:0 10px 10px 0;padding:10px 14px;margin:12px 0;font-size:.92rem}
+  .adm p{margin:4px 0}
+  .adm-t{font-weight:700;font-size:.85rem;margin-bottom:2px}
+  .adm-tip{background:#eef3f1;border-left:4px solid var(--accent)}
+  .adm-tip .adm-t{color:var(--accent)}
+  .adm-note{background:#fdf6ee;border-left:4px solid var(--accent2)}
+  .adm-note .adm-t{color:var(--accent2)}
+  .adm-warning,.adm-caution{background:#fdefee;border-left:4px solid #b3352f}
+  .adm-warning .adm-t,.adm-caution .adm-t{color:#b3352f}
+  .adm-important{background:#f0eefa;border-left:4px solid #5b4ea8}
+  .adm-important .adm-t{color:#5b4ea8}
+
+  /* sjekklister */
+  .chkrow{display:flex;align-items:flex-start;gap:9px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .chkrow input[type=checkbox]{transform:scale(1.25);accent-color:var(--accent);cursor:pointer;margin-top:4px;flex:none}
+  .chkrow.done .chktext{opacity:.5;text-decoration:line-through}
+  .chktext{flex:1}
+
+  /* bilder */
+  .imgs{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+  .imgwrap{position:relative;flex:1 1 250px;max-width:100%}
+  .imgs img{width:100%;border-radius:12px;display:block;border:1px solid var(--line)}
+  .imgdel{position:absolute;top:8px;right:8px}
+
+  /* notater */
+  .notes{margin-top:14px}
+  .notes label{font-size:.85rem;color:var(--muted);display:block;margin-bottom:4px}
+  .notes textarea{width:100%;min-height:60px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:.9rem;background:#fbfaf7;resize:vertical}
+
+  /* redigeringsmodus */
+  .toolbar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:20;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:999px;padding:8px 10px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+  button.btn{border:none;border-radius:999px;padding:9px 18px;font-size:.92rem;cursor:pointer;background:var(--chip);color:var(--accent);font-weight:600}
+  button.btn.primary{background:var(--accent);color:#fff}
+  button.btn.danger{background:#fdefee;color:#b3352f}
+  button.mini{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:8px;padding:2px 9px;font-size:.85rem;cursor:pointer;line-height:1.5}
+  button.mini:hover{color:#b3352f;border-color:#e8b7b4}
+  button.add{border:1px dashed var(--accent);background:transparent;color:var(--accent);border-radius:10px;padding:6px 14px;font-size:.88rem;cursor:pointer;margin:6px 6px 0 0}
+  .edit input[type=text], .edit textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit;font-size:.92rem;background:#fffdf8}
+  .edit textarea{resize:vertical;min-height:38px}
+  .edit textarea.md{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+  .erow{display:flex;gap:8px;margin:6px 0;align-items:flex-start}
+  .erow .time{width:96px;flex:none}
+  .erow .grow{flex:1}
+  .ecol{display:flex;flex-direction:column;gap:3px;flex:none}
+  .ehead input{background:rgba(255,255,255,.95)}
+  .ehead{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;width:100%}
+  .mdhint{font-size:.78rem;color:var(--muted);margin-top:2px}
+  .editing-banner{position:sticky;top:0;z-index:15;background:var(--accent2);color:#fff;text-align:center;padding:6px;font-size:.88rem;border-radius:0 0 10px 10px}
+  #sync{position:fixed;bottom:74px;right:16px;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:19}
+  #sync.show{opacity:1}
+  .uplbl{display:inline-block;border:1px dashed var(--accent);color:var(--accent);border-radius:10px;padding:6px 14px;font-size:.88rem;cursor:pointer;margin-top:6px}
+</style>
+</head>
+<body>
+<div id="banner"></div>
+<div class="wrap" id="app"><p style="text-align:center;color:#7a766c">Laster…</p></div>
+<div id="toolbar" class="toolbar"></div>
+<div id="sync">✓ Lagret</div>
+
+<script src="/vendor/marked.min.js"></script>
+<script src="/vendor/purify.min.js"></script>
+<script>
+"use strict";
+/* ============ tilstand ============ */
+let C = null;          // innholdsdokumentet fra serveren
+let editing = false;
+let dirty = false;
+
+const app = document.getElementById("app");
+const toolbar = document.getElementById("toolbar");
+const banner = document.getElementById("banner");
+const uid = () => "x" + Math.random().toString(36).slice(2, 9);
+
+/* ============ markdown m/ GitHub-admonitions ============ */
+const ADM = { tip:"💡 Tips", note:"ℹ️ Merk", warning:"⚠️ Obs", important:"❗ Viktig", caution:"⚠️ Advarsel" };
+function preAdm(src){
+  const lines = String(src||"").split("\n"), out=[]; let i=0;
+  while(i<lines.length){
+    const m = lines[i].match(/^>\s*\[!(TIP|NOTE|WARNING|IMPORTANT|CAUTION)\]\s*$/i);
+    if(m){
+      i++; const buf=[];
+      while(i<lines.length && /^\s*>/.test(lines[i])){ buf.push(lines[i].replace(/^\s*>\s?/,"")); i++; }
+      const t = m[1].toLowerCase();
+      out.push(`<div class="adm adm-${t}"><div class="adm-t">${ADM[t]}</div>${marked.parse(buf.join("\n"))}</div>`);
+    } else { out.push(lines[i]); i++; }
+  }
+  return out.join("\n");
+}
+function md(src){
+  return DOMPurify.sanitize(marked.parse(preAdm(src)), {ADD_ATTR:["target"]});
+}
+function mdInline(src){
+  return DOMPurify.sanitize(marked.parseInline(String(src||"")), {ADD_ATTR:["target"]});
+}
+
+/* ============ hjelpere ============ */
+function el(tag, attrs, ...kids){
+  const n = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs||{})){
+    if(k==="class") n.className=v;
+    else if(k==="html") n.innerHTML=v;
+    else if(k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for(const k of kids) if(k!=null) n.append(k);
+  return n;
+}
+function inp(value, placeholder, oninput, cls){
+  const i = el("input",{type:"text",class:cls||"",placeholder:placeholder||""});
+  i.value = value||"";
+  i.addEventListener("input",()=>{oninput(i.value); dirty=true;});
+  return i;
+}
+function ta(value, placeholder, oninput, cls){
+  const t = el("textarea",{class:cls||"",placeholder:placeholder||""});
+  t.value = value||"";
+  t.addEventListener("input",()=>{oninput(t.value); dirty=true; autosize(t);});
+  requestAnimationFrame(()=>autosize(t));
+  return t;
+}
+function autosize(t){ t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
+function move(arr,i,dir){ const j=i+dir; if(j<0||j>=arr.length)return; [arr[i],arr[j]]=[arr[j],arr[i]]; render(); dirty=true; }
+function flash(msg){
+  const s=document.getElementById("sync"); s.textContent=msg||"✓ Lagret";
+  s.classList.add("show"); clearTimeout(flash.t); flash.t=setTimeout(()=>s.classList.remove("show"),1400);
+}
+async function api(url, opts){
+  const r = await fetch(url, opts);
+  if(r.status===401){ location.reload(); throw new Error("401"); }
+  return r;
+}
+
+/* ============ visning ============ */
+function render(){
+  app.innerHTML="";
+  banner.innerHTML="";
+  if(editing) banner.append(el("div",{class:"editing-banner"},"✏️ Redigeringsmodus – husk å lagre når du er ferdig"));
+
+  // hero
+  const hero = el("header",{class:"hero"});
+  if(editing){
+    hero.classList.add("edit");
+    hero.append(
+      inp(C.hero.title,"Tittel",v=>C.hero.title=v),
+      el("div",{style:"height:6px"}),
+      inp(C.hero.subtitle,"Undertittel",v=>C.hero.subtitle=v),
+      el("div",{style:"height:6px"}),
+      inp(C.hero.badge,"Badge-tekst",v=>C.hero.badge=v)
+    );
+  } else {
+    hero.append(
+      el("h1",{},C.hero.title),
+      el("p",{},C.hero.subtitle),
+      el("p",{class:"badge"},C.hero.badge)
+    );
+  }
+  app.append(hero);
+
+  // toc (kun visning)
+  if(!editing){
+    const toc = el("nav",{class:"toc"}, el("strong",{},"Hopp til: "));
+    for(const d of C.days) toc.append(el("a",{href:"#"+d.id}, d.date ? d.date.split(" ").slice(0,2).join(" ")+" " : "", d.title.replace(/^Dag \d+\s*·\s*/,"").slice(0,22)));
+    for(const s of C.sections) toc.append(el("a",{href:"#"+s.id}, s.title.slice(0,20)));
+    app.append(toc);
+  }
+
+  // intro
+  if(editing){
+    const box = el("div",{class:"section edit"});
+    box.append(el("h2",{},"Intro-melding (markdown)"), ta(C.intro,"",v=>C.intro=v,"md"), mdHint());
+    app.append(box);
+  } else if(C.intro){
+    app.append(el("div",{html:md(C.intro)}));
+  }
+
+  // dager
+  C.days.forEach((d,di)=>app.append(renderDay(d,di)));
+  if(editing){
+    app.append(el("button",{class:"add",onclick:()=>{
+      C.days.push({id:uid(),title:"Dag "+(C.days.length+1)+" · Ny dag",date:"",chip:"",rows:[{time:"09:00",text:"…"}],maps:[],images:[],blocks:[]});
+      render(); dirty=true;
+    }},"＋ Legg til dag"));
+  }
+
+  // seksjoner
+  C.sections.forEach((s,si)=>app.append(renderSection(s,si)));
+  if(editing){
+    app.append(el("button",{class:"add",onclick:()=>{
+      C.sections.push({id:uid(),title:"Ny seksjon",blocks:[{type:"md",md:"Skriv her…"}]});
+      render(); dirty=true;
+    }},"＋ Legg til seksjon"));
+  }
+
+  // footer
+  if(editing){
+    const f = el("div",{class:"section edit"});
+    f.append(el("h2",{},"Bunntekst (markdown)"), ta(C.footer,"",v=>C.footer=v,"md"));
+    app.append(f);
+  } else if(C.footer){
+    app.append(el("footer",{html:md(C.footer)}));
+  }
+
+  renderToolbar();
+}
+
+function mdHint(){
+  return el("div",{class:"mdhint"},"Markdown: **fet**, [lenke](url), - liste, > [!TIP] / [!NOTE] / [!WARNING] for tips-bokser");
+}
+
+function renderDay(d, di){
+  const card = el("div",{class:"day"+(editing?" edit":""),id:d.id});
+  const head = el("div",{class:"day-head"});
+  if(editing){
+    const grid = el("div",{class:"ehead"},
+      inp(d.title,"Tittel",v=>d.title=v),
+      inp(d.date,"Dato (f.eks. Lørdag 18. juli)",v=>d.date=v),
+      inp(d.chip,"Merkelapp (f.eks. ~230 km)",v=>d.chip=v));
+    head.append(grid);
+  } else {
+    head.append(el("h2",{},d.title), el("span",{class:"date"},d.date||""));
+    if(d.chip) head.append(el("span",{class:"distchip"},d.chip));
+  }
+  card.append(head);
+  const body = el("div",{class:"day-body"});
+
+  // tidsplan
+  if(editing){
+    d.rows.forEach((r,ri)=>{
+      body.append(el("div",{class:"erow"},
+        el("div",{class:"ecol"},
+          el("button",{class:"mini",title:"Flytt opp",onclick:()=>move(d.rows,ri,-1)},"↑"),
+          el("button",{class:"mini",title:"Flytt ned",onclick:()=>move(d.rows,ri,1)},"↓")),
+        (()=>{const i=inp(r.time,"kl.",v=>r.time=v);i.classList.add("time");return i;})(),
+        (()=>{const t=ta(r.text,"Beskrivelse (markdown)",v=>r.text=v);t.classList.add("grow");return t;})(),
+        el("button",{class:"mini",title:"Slett rad",onclick:()=>{d.rows.splice(ri,1);render();dirty=true;}},"🗑")
+      ));
+    });
+    body.append(el("button",{class:"add",onclick:()=>{d.rows.push({time:"",text:""});render();dirty=true;}},"＋ Rad"));
+  } else if(d.rows.length){
+    const tb = el("table",{class:"sched"});
+    for(const r of d.rows){
+      tb.append(el("tr",{},
+        el("td",{class:"t"},r.time),
+        el("td",{html:mdInline(r.text)})));
+    }
+    body.append(tb);
+  }
+
+  // kartlenker
+  if(editing){
+    body.append(el("h3",{},"Kartlenker"));
+    d.maps.forEach((m,mi)=>{
+      body.append(el("div",{class:"erow"},
+        (()=>{const i=inp(m.label,"Etikett",v=>m.label=v);i.classList.add("grow");return i;})(),
+        (()=>{const i=inp(m.url,"https://maps.apple.com/…",v=>m.url=v);i.classList.add("grow");return i;})(),
+        el("button",{class:"mini",onclick:()=>{d.maps.splice(mi,1);render();dirty=true;}},"🗑")));
+    });
+    body.append(el("button",{class:"add",onclick:()=>{d.maps.push({label:"🗺️ ",url:""});render();dirty=true;}},"＋ Kartlenke"));
+  } else if(d.maps.length){
+    const m = el("div",{class:"maps"});
+    for(const l of d.maps) m.append(el("a",{href:l.url,target:"_blank",rel:"noopener"},l.label));
+    body.append(m);
+  }
+
+  // bilder
+  if(d.images.length || editing){
+    const g = el("div",{class:"imgs"});
+    d.images.forEach((im,ii)=>{
+      const w = el("div",{class:"imgwrap"}, el("img",{src:im.url,alt:im.caption||"",loading:"lazy"}));
+      if(editing) w.append(el("button",{class:"mini imgdel",onclick:()=>{d.images.splice(ii,1);render();dirty=true;}},"🗑"));
+      g.append(w);
+    });
+    body.append(g);
+    if(editing){
+      const fi = el("input",{type:"file",accept:"image/*",multiple:"",style:"display:none"});
+      fi.addEventListener("change",async ()=>{
+        for(const f of fi.files){
+          flash("⬆️ Laster opp …");
+          const r = await api("/api/upload?name="+encodeURIComponent(f.name),{method:"POST",body:f});
+          if(r.ok){ const j=await r.json(); d.images.push({url:j.url,caption:""}); dirty=true; }
+          else flash("⚠️ Opplasting feilet");
+        }
+        render();
+      });
+      const lbl = el("label",{class:"uplbl"},"📷 Last opp bilde(r)");
+      lbl.append(fi);
+      body.append(lbl);
+    }
+  }
+
+  // markdown-blokker (tips m.m.)
+  d.blocks.forEach((b,bi)=>{
+    if(editing){
+      body.append(el("div",{class:"erow"},
+        (()=>{const t=ta(b.md,"Markdown – bruk > [!TIP] for tipsboks",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
+        el("button",{class:"mini",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},"🗑")));
+    } else {
+      body.append(el("div",{html:md(b.md)}));
+    }
+  });
+  if(editing){
+    body.append(el("button",{class:"add",onclick:()=>{d.blocks.push({md:"> [!TIP]\n> Nytt tips…"});render();dirty=true;}},"＋ Tips/tekstblokk"), mdHint());
+    body.append(el("div",{style:"margin-top:14px"},
+      el("button",{class:"btn danger",onclick:()=>{
+        if(confirm("Slette hele «"+d.title+"»?")){ C.days.splice(di,1); render(); dirty=true; }
+      }},"Slett dag"),
+      " ",
+      el("button",{class:"mini",onclick:()=>move(C.days,di,-1)},"↑ Flytt dag"),
+      el("button",{class:"mini",onclick:()=>move(C.days,di,1)},"↓ Flytt dag")));
+  }
+
+  // felles notat (alltid aktivt, lagres live)
+  const nw = el("div",{class:"notes"}, el("label",{},"📝 Felles notater"));
+  const nt = el("textarea",{placeholder:"Skriv her – synkes mellom dere…"});
+  nt.value = (C.notes && C.notes[d.id]) || "";
+  let timer;
+  nt.addEventListener("input",()=>{
+    C.notes = C.notes||{}; C.notes[d.id]=nt.value;
+    clearTimeout(timer);
+    timer=setTimeout(async()=>{ await api("/api/note",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:d.id,text:nt.value})}); flash(); },800);
+  });
+  nw.append(nt);
+  body.append(nw);
+
+  card.append(body);
+  return card;
+}
+
+function renderSection(s, si){
+  const card = el("div",{class:"section"+(editing?" edit":""),id:s.id});
+  if(editing){
+    card.append(inp(s.title,"Seksjonstittel",v=>s.title=v));
+  } else {
+    card.append(el("h2",{},s.title));
+  }
+
+  s.blocks.forEach((b,bi)=>{
+    if(b.type==="checklist"){
+      const box = el("div",{});
+      if(editing){
+        box.append(el("div",{style:"margin:14px 0 4px"}, inp(b.title,"Gruppetittel (valgfri)",v=>b.title=v)));
+        b.items.forEach((it,ii)=>{
+          box.append(el("div",{class:"erow"},
+            el("div",{class:"ecol"},
+              el("button",{class:"mini",onclick:()=>move(b.items,ii,-1)},"↑"),
+              el("button",{class:"mini",onclick:()=>move(b.items,ii,1)},"↓")),
+            (()=>{const t=ta(it.text,"Punkt (markdown)",v=>it.text=v);t.classList.add("grow");return t;})(),
+            el("button",{class:"mini",onclick:()=>{b.items.splice(ii,1);render();dirty=true;}},"🗑")));
+        });
+        box.append(el("button",{class:"add",onclick:()=>{b.items.push({id:uid(),text:"",done:false});render();dirty=true;}},"＋ Punkt"),
+                   el("button",{class:"add",onclick:()=>{if(confirm("Slette hele sjekklisten?")){s.blocks.splice(bi,1);render();dirty=true;}}},"🗑 Slett sjekkliste"));
+      } else {
+        if(b.title) box.append(el("h3",{},b.title));
+        b.items.forEach(it=>{
+          const row = el("div",{class:"chkrow"+(it.done?" done":"")});
+          const cb = el("input",{type:"checkbox"});
+          cb.checked = !!it.done;
+          cb.addEventListener("change",async()=>{
+            it.done = cb.checked; row.classList.toggle("done",it.done);
+            await api("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:it.id,value:it.done})});
+            flash();
+          });
+          row.append(cb, el("div",{class:"chktext",html:mdInline(it.text)}));
+          box.append(row);
+        });
+      }
+      card.append(box);
+    } else { // md
+      if(editing){
+        card.append(el("div",{class:"erow"},
+          (()=>{const t=ta(b.md,"Markdown",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
+          el("button",{class:"mini",onclick:()=>{s.blocks.splice(bi,1);render();dirty=true;}},"🗑")));
+      } else {
+        card.append(el("div",{html:md(b.md)}));
+      }
+    }
+  });
+
+  if(editing){
+    card.append(el("div",{style:"margin-top:10px"},
+      el("button",{class:"add",onclick:()=>{s.blocks.push({type:"md",md:""});render();dirty=true;}},"＋ Tekstblokk"),
+      el("button",{class:"add",onclick:()=>{s.blocks.push({type:"checklist",title:"",items:[{id:uid(),text:"",done:false}]});render();dirty=true;}},"＋ Sjekkliste"),
+      mdHint(),
+      el("div",{style:"margin-top:10px"},
+        el("button",{class:"btn danger",onclick:()=>{
+          if(confirm("Slette seksjonen «"+s.title+"»?")){ C.sections.splice(si,1); render(); dirty=true; }
+        }},"Slett seksjon"),
+        " ",
+        el("button",{class:"mini",onclick:()=>move(C.sections,si,-1)},"↑"),
+        el("button",{class:"mini",onclick:()=>move(C.sections,si,1)},"↓"))));
+  }
+  return card;
+}
+
+/* ============ toolbar / lagring ============ */
+function renderToolbar(){
+  toolbar.innerHTML="";
+  if(editing){
+    toolbar.append(
+      el("button",{class:"btn primary",onclick:save},"💾 Lagre"),
+      el("button",{class:"btn",onclick:async()=>{
+        if(dirty && !confirm("Forkaste endringene?")) return;
+        await load(); editing=false; dirty=false; render();
+      }},"Avbryt"));
+  } else {
+    toolbar.append(el("button",{class:"btn",onclick:()=>{editing=true;render();window.scrollTo({top:0});}},"✏️ Rediger"));
+  }
+}
+async function save(){
+  const r = await api("/api/content",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(C)});
+  if(r.status===409){
+    alert("Noen andre har lagret i mellomtiden. Siden lastes på nytt – endringene dine må dessverre gjøres om.");
+    await load(); editing=false; dirty=false; render(); return;
+  }
+  if(r.ok){ const j=await r.json(); C.rev=j.rev; dirty=false; editing=false; render(); flash("✓ Lagret"); }
+  else flash("⚠️ Lagring feilet");
+}
+
+/* ============ last + poll ============ */
+async function load(){
+  const r = await api("/api/content");
+  C = await r.json();
+}
+async function poll(){
+  if(editing) return; // ikke overskriv mens man redigerer
+  try{
+    const r = await api("/api/content");
+    const fresh = await r.json();
+    if(JSON.stringify(fresh)!==JSON.stringify(C) && !document.activeElement.matches("textarea,input")){
+      C = fresh; render();
+    }
+  }catch(e){}
+}
+window.addEventListener("beforeunload",(e)=>{ if(dirty){ e.preventDefault(); e.returnValue=""; }});
+
+load().then(render);
+setInterval(poll, 15000);
+</script>
+</body>
+</html>

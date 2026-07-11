@@ -1,0 +1,12 @@
+services:
+  roadtrip:
+    build: .
+    container_name: roadtrip-2026
+    ports:
+      - "8080:3000"        # endre 8080 til ønsket port på LXC-en
+    environment:
+      - PIN=endre-meg      # delt PIN/passord for dere to
+      - SESSION_SECRET=    # valgfritt; genereres og lagres i ./data hvis tom
+    volumes:
+      - ./data:/app/data   # delt tilstand (avkrysninger + notater) overlever restart
+    restart: unless-stopped
