@@ -301,19 +301,6 @@
         ]},
         { "type": "md", "md": "> [!TIP]\n> Huke av etter hvert som vi ordner ting!" }
       ]
-    },
-    {
-      "id": "bestillinger",
-      "title": "Bestillinger & betalinger",
-      "blocks": [
-        { "type": "bookings", "title": "", "items": [
-          { "id": "b1", "title": "Skydive Voss – tandemhopp", "kind": "aktivitet", "url": "https://www.skydivevoss.no", "ref": "", "date": "18. juli", "amount": "", "paid": false, "email": "" },
-          { "id": "b2", "title": "Tesla – leiebil", "kind": "transport", "url": "", "ref": "", "date": "18.–29. juli", "amount": "", "paid": false, "email": "" },
-          { "id": "b3", "title": "Overnatting Kristiansand", "kind": "overnatting", "url": "", "ref": "", "date": "21.–23. juli", "amount": "", "paid": false, "email": "" },
-          { "id": "b4", "title": "Billetter Sup & Stup", "kind": "aktivitet", "url": "https://www.supogstup.no/", "ref": "", "date": "24. juli", "amount": "", "paid": false, "email": "" },
-          { "id": "b5", "title": "Overnatting Oslo", "kind": "overnatting", "url": "", "ref": "", "date": "26.–28. juli", "amount": "", "paid": false, "email": "" }
-        ]}
-      ]
     }
   ],
   "notes": {},
