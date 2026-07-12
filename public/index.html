@@ -152,6 +152,8 @@
   .lucide{display:inline-block;vertical-align:middle;flex-shrink:0;pointer-events:none}
   button .lucide, label .lucide, a .lucide{margin-right:4px}
   button.mini .lucide{margin-right:0}
+  /* inline kart-lenker: [tekst](kart:adresse) */
+  .maplink::before{content:"";display:inline-block;width:.85em;height:.85em;margin-right:2px;vertical-align:-.12em;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231f6f5c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E") center/contain no-repeat}
 </style>
 </head>
 <body>
@@ -230,11 +232,18 @@ function preAdm(src){
   }
   return out.join("\n");
 }
+// [tekst](kart:adresse) → kart-lenke fra nåværende posisjon, med pin-ikon
+function preMap(src){
+  return String(src||"").replace(/\[([^\]]+)\]\(kart:\s*([^)]+)\)/g, (m, text, loc)=>{
+    const url = mapUrl(loc.trim()).replace(/&/g,"&amp;");
+    return `<a href="${url}" target="_blank" rel="noopener" class="maplink">${text}</a>`;
+  });
+}
 function md(src){
-  return DOMPurify.sanitize(marked.parse(preAdm(src)), {ADD_ATTR:["target"]});
+  return DOMPurify.sanitize(marked.parse(preMap(preAdm(src))), {ADD_ATTR:["target"]});
 }
 function mdInline(src){
-  return DOMPurify.sanitize(marked.parseInline(String(src||"")), {ADD_ATTR:["target"]});
+  return DOMPurify.sanitize(marked.parseInline(preMap(String(src||""))), {ADD_ATTR:["target"]});
 }
 
 /* ============ hjelpere ============ */
@@ -431,7 +440,7 @@ function render(){
 }
 
 function mdHint(){
-  return el("div",{class:"mdhint"},"Markdown: **fet**, [lenke](url), - liste, > [!TIP] / [!NOTE] / [!WARNING] for tips-bokser");
+  return el("div",{class:"mdhint"},"Markdown: **fet**, [lenke](url), [Café](kart:adresse) for kart-lenke, - liste, > [!TIP] / [!NOTE] / [!WARNING] for tips-bokser");
 }
 
 /* ============ bestillinger & betalinger ============ */
