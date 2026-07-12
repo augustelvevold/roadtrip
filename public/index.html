@@ -668,12 +668,6 @@ function renderDay(d, di){
     body.append(m);
   }
 
-  // bestillinger på dagen
-  if((d.bookings && d.bookings.length) || editing){
-    if(editing) d.bookings = d.bookings || [];
-    body.append(el("h3",{},"Bestillinger"));
-    body.append(bookingsList(d.bookings));
-  }
 
   // bilder
   if(d.images.length || editing){

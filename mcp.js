@@ -85,7 +85,7 @@ function buildServer(store) {
         "• Sjekklister (pakkeliste, booking-sjekkliste): legg_til_punkt / rediger_punkt / slett_punkt / kryss_av\n" +
         "• Dagsnotat: sett_notat\n\n" +
         "Hvis du likevel bruker denne: hent planen med hent_plan først, gjør endringene, og send HELE dokumentet tilbake – ikke utelat felter.\n\n" +
-        "Datamodell for bestillinger: { id, title, kind, url, location, ref, date, amount, paid, email, day }, kind ∈ overnatting|transport|aktivitet|mat|annet, location = adresse/kartlenke, day = valgfri dag-id for hopp-lenker. Ligger enten globalt i section-blokk { type:'bookings', items:[...] } eller på en dag i days[].bookings:[...].",
+        "Datamodell for bestillinger: { id, title, kind, url, location, ref, date, amount, paid, email, day }, kind ∈ overnatting|transport|aktivitet|mat|annet, location = adresse/kartlenke, day = valgfri dag-id som lager hopp-lenke. Bestillinger ligger ALLTID samlet i ÉN global section-blokk { type:'bookings', items:[...] } – aldri på en dag (days[].bookings brukes ikke).",
       inputSchema: {
         plan: z
           .object({
@@ -149,15 +149,18 @@ function buildServer(store) {
   );
 
   // --- Verktøy 5: legg til én bestilling -----------------------
-  // Presist skjema, så agenten slipper å gjette strukturen. Legger
-  // enten på en dag (dag_id satt) eller i den globale bestillings-
-  // seksjonen (opprettes hvis den ikke finnes).
+  // ALLE bestillinger/betalinger samles i ÉN global seksjon
+  // «Bestillinger & betalinger». En bestilling legges ALDRI inne på en
+  // dag – knytt den heller til en dag med knyttet_dag (gir hopp-lenker).
   server.registerTool(
     "legg_til_bestilling",
     {
       title: "Legg til bestilling",
       description:
-        "Legg til én bestilling/betaling (overnatting, transport, aktivitet e.l.). Havner som standard i den globale seksjonen «Bestillinger & betalinger» (opprettes automatisk). Bruk knyttet_dag for å beholde den i oversikten OG få hopp-lenker til/fra en dag (anbefalt). dag_id legger den fysisk inne på selve dagen i stedet.",
+        "Legg til én bestilling/betaling (overnatting, transport, aktivitet, billett e.l.). " +
+        "Den havner ALLTID i den ene globale seksjonen «Bestillinger & betalinger» – aldri inne på en enkelt dag. " +
+        "Vil du at den skal vises/lenkes på en bestemt dag, sett knyttet_dag='d7' (lager automatisk hopp-lenker begge veier). " +
+        "IKKE bruk oppdater_dag med et bookings-felt for dette.",
       inputSchema: {
         tittel: z.string().describe("f.eks. 'Airbnb – Stavanger'"),
         type: z.enum(["overnatting", "transport", "aktivitet", "mat", "annet"]).optional().describe("standard: annet"),
@@ -168,11 +171,10 @@ function buildServer(store) {
         betalt: z.boolean().optional().describe("standard: false"),
         epost: z.string().optional().describe("lenke til bekreftelses-epost (Gmail-søk, mailto e.l.)"),
         sted: z.string().optional().describe("adresse eller kartlenke – blir en klikkbar kart-lenke"),
-        knyttet_dag: z.string().optional().describe("dag-id (f.eks. 'd1') bestillingen gjelder – gir hopp-lenker mellom dag og bestilling"),
-        dag_id: z.string().optional().describe("legg bestillingen FYSISK på en dag i stedet for global seksjon"),
+        knyttet_dag: z.string().optional().describe("dag-id (f.eks. 'd7') bestillingen gjelder – gir hopp-lenker mellom dagen og bestillingen"),
       },
     },
-    async ({ tittel, type, lenke, ref, dato, belop, betalt, epost, sted, knyttet_dag, dag_id }) => {
+    async ({ tittel, type, lenke, ref, dato, belop, betalt, epost, sted, knyttet_dag }) => {
       const c = store.getContent();
       const booking = {
         id: uid(),
@@ -187,28 +189,19 @@ function buildServer(store) {
         email: epost || "",
         day: knyttet_dag || undefined,
       };
-      let hvor;
-      if (dag_id) {
-        const day = (c.days || []).find((d) => d.id === dag_id);
-        if (!day) return { content: [{ type: "text", text: `Fant ingen dag med id ${dag_id}.` }], isError: true };
-        day.bookings = day.bookings || [];
-        day.bookings.push(booking);
-        hvor = `dag ${dag_id}`;
-      } else {
-        let block = null;
-        for (const s of c.sections || []) {
-          for (const b of s.blocks || []) if (b.type === "bookings") { block = b; break; }
-          if (block) break;
-        }
-        if (!block) {
-          block = { type: "bookings", title: "", items: [] };
-          c.sections.push({ id: "bestillinger", title: "Bestillinger & betalinger", blocks: [block] });
-        }
-        block.items = block.items || [];
-        block.items.push(booking);
-        hvor = "global seksjon";
+      let block = null;
+      for (const s of c.sections || []) {
+        for (const b of s.blocks || []) if (b.type === "bookings") { block = b; break; }
+        if (block) break;
       }
+      if (!block) {
+        block = { type: "bookings", title: "", items: [] };
+        c.sections.push({ id: "bestillinger", title: "Bestillinger & betalinger", blocks: [block] });
+      }
+      block.items = block.items || [];
+      block.items.push(booking);
       const rev = store.replaceContent(c);
+      const hvor = knyttet_dag ? `global seksjon, lenket til ${knyttet_dag}` : "global seksjon";
       return { content: [{ type: "text", text: `La til «${tittel}» (${hvor}, rev ${rev}).` }] };
     }
   );
@@ -220,7 +213,7 @@ function buildServer(store) {
     {
       title: "Oppdater én dag",
       description:
-        "Endre én dag uten å skrive om hele planen (mye raskere). Send bare feltene du vil endre i 'endringer' – andre felter beholdes. Eksempler: { rows: [{time,text},...] } for ny tidsplan, { date: 'Mandag 20. juli' } for å flytte datoen, { title, chip } for info. Mulige felt: title, date, chip, rows, maps ({label,url}), blocks, bookings, images. En blokk er enten en tips/tekst-blokk { md } ELLER en egen dags-sjekkliste { type:'checklist', title, items:[{id,text,done}] } (uavhengige haker fra pakkelista – bra for «pakk til dagsturen»). Hent planen med hent_plan først for å se gjeldende innhold.",
+        "Endre én dag uten å skrive om hele planen (mye raskere). Send bare feltene du vil endre i 'endringer' – andre felter beholdes. Eksempler: { rows: [{time,text},...] } for ny tidsplan, { date: 'Mandag 20. juli' } for å flytte datoen, { title, chip } for info. Mulige felt: title, date, chip, rows, maps ({label,url}), blocks, images. En blokk er enten en tips/tekst-blokk { md } ELLER en egen dags-sjekkliste { type:'checklist', title, items:[{id,text,done}] } (uavhengige haker fra pakkelista – bra for «pakk til dagsturen»). BESTILLINGER hører IKKE hjemme på en dag – bruk legg_til_bestilling med knyttet_dag i stedet. Hent planen med hent_plan først for å se gjeldende innhold.",
       inputSchema: {
         dag_id: z.string().describe("dagens id, f.eks. 'd4'"),
         endringer: z.object({}).passthrough().describe("kun feltene som skal endres"),
