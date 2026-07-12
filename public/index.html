@@ -110,6 +110,8 @@
   .notes{margin-top:14px}
   .notes label{font-size:.85rem;color:var(--muted);display:block;margin-bottom:4px}
   .notes textarea{width:100%;min-height:60px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:.9rem;background:#fbfaf7;resize:vertical}
+  .notes-toggle{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .notes-toggle:hover{color:var(--accent);border-color:var(--accent)}
 
   /* redigeringsmodus */
   .toolbar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:20;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:999px;padding:8px 10px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
@@ -668,17 +670,38 @@ function renderDay(d, di){
       el("button",{class:"mini",onclick:()=>move(C.days,di,1)},icon("chevron-down",12)," Flytt dag")));
   }
 
-  // felles notat (alltid aktivt, lagres live)
-  const nw = el("div",{class:"notes"}, el("label",{},icon("notebook-pen",13)," Felles notater"));
-  const nt = el("textarea",{placeholder:"Skriv her – synkes mellom dere…"});
-  nt.value = (C.notes && C.notes[d.id]) || "";
-  let timer;
-  nt.addEventListener("input",()=>{
-    C.notes = C.notes||{}; C.notes[d.id]=nt.value;
-    clearTimeout(timer);
-    timer=setTimeout(async()=>{ await api("/api/note",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:d.id,text:nt.value})}); flash(); },800);
-  });
-  nw.append(nt);
+  // felles notat – skjult bak en knapp til det finnes innhold
+  const nw = el("div",{class:"notes"});
+  function renderNote(open){
+    nw.innerHTML="";
+    const has = !!(C.notes && C.notes[d.id]);
+    if(!open && !has){
+      nw.append(el("button",{class:"notes-toggle",onclick:()=>renderNote(true)}, icon("notebook-pen",13)," Felles notater"));
+      return;
+    }
+    nw.append(el("label",{},icon("notebook-pen",13)," Felles notater"));
+    const nt = el("textarea",{placeholder:"Skriv her – synkes mellom dere…"});
+    nt.value = (C.notes && C.notes[d.id]) || "";
+    let timer;
+    const push = (text)=>api("/api/note",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:d.id,text})});
+    nt.addEventListener("input",()=>{
+      autosize(nt);
+      C.notes = C.notes||{}; C.notes[d.id]=nt.value;
+      clearTimeout(timer);
+      timer=setTimeout(async()=>{ await push(nt.value); flash(); },800);
+    });
+    nt.addEventListener("blur",()=>{
+      if(!nt.value.trim()){
+        clearTimeout(timer);
+        if(C.notes && C.notes[d.id]!==undefined){ delete C.notes[d.id]; push(""); }
+        renderNote(false);   // kollaps igjen når tom
+      }
+    });
+    nw.append(nt);
+    requestAnimationFrame(()=>autosize(nt));
+    if(open) requestAnimationFrame(()=>nt.focus());
+  }
+  renderNote(false);
   body.append(nw);
 
   card.append(body);
