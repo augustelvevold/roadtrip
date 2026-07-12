@@ -49,17 +49,16 @@ function saveContent() {
 
 // Delt logikk brukt av både HTTP-API-et og MCP-verktøyene ------
 function applyCheck(id, value) {
-  for (const sec of content.sections || []) {
-    for (const b of sec.blocks || []) {
+  const searchBlocks = (blocks) => {
+    for (const b of blocks || []) {
       if (b.type !== "checklist") continue;
       const item = (b.items || []).find((it) => it.id === id);
-      if (item) {
-        item.done = !!value;
-        saveContent();
-        return true;
-      }
+      if (item) { item.done = !!value; return true; }
     }
-  }
+    return false;
+  };
+  for (const sec of content.sections || []) if (searchBlocks(sec.blocks)) { saveContent(); return true; }
+  for (const d of content.days || []) if (searchBlocks(d.blocks)) { saveContent(); return true; }
   return false;
 }
 function applyRowCheck(dayId, index, value) {

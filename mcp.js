@@ -31,13 +31,18 @@ function findBooking(c, id) {
   return null;
 }
 
-// Finn et sjekklistepunkt (pakkeliste/booking-sjekkliste) på id.
+// Finn et sjekklistepunkt (i seksjoner ELLER på en dags egen sjekkliste) på id.
 function findCheckItem(c, id) {
-  for (const s of c.sections || []) for (const b of s.blocks || []) {
-    if (b.type !== "checklist" || !Array.isArray(b.items)) continue;
-    const idx = b.items.findIndex((x) => x.id === id);
-    if (idx >= 0) return { list: b.items, idx, item: b.items[idx] };
-  }
+  const scan = (blocks) => {
+    for (const b of blocks || []) {
+      if (b.type !== "checklist" || !Array.isArray(b.items)) continue;
+      const idx = b.items.findIndex((x) => x.id === id);
+      if (idx >= 0) return { list: b.items, idx, item: b.items[idx] };
+    }
+    return null;
+  };
+  for (const s of c.sections || []) { const r = scan(s.blocks); if (r) return r; }
+  for (const d of c.days || []) { const r = scan(d.blocks); if (r) return r; }
   return null;
 }
 
@@ -215,7 +220,7 @@ function buildServer(store) {
     {
       title: "Oppdater én dag",
       description:
-        "Endre én dag uten å skrive om hele planen (mye raskere). Send bare feltene du vil endre i 'endringer' – andre felter beholdes. Eksempler: { rows: [{time,text},...] } for ny tidsplan, { date: 'Mandag 20. juli' } for å flytte datoen, { title, chip } for info. Mulige felt: title, date, chip, rows, maps ({label,url}), blocks ({md}), bookings, images. Hent planen med hent_plan først for å se gjeldende innhold.",
+        "Endre én dag uten å skrive om hele planen (mye raskere). Send bare feltene du vil endre i 'endringer' – andre felter beholdes. Eksempler: { rows: [{time,text},...] } for ny tidsplan, { date: 'Mandag 20. juli' } for å flytte datoen, { title, chip } for info. Mulige felt: title, date, chip, rows, maps ({label,url}), blocks, bookings, images. En blokk er enten en tips/tekst-blokk { md } ELLER en egen dags-sjekkliste { type:'checklist', title, items:[{id,text,done}] } (uavhengige haker fra pakkelista – bra for «pakk til dagsturen»). Hent planen med hent_plan først for å se gjeldende innhold.",
       inputSchema: {
         dag_id: z.string().describe("dagens id, f.eks. 'd4'"),
         endringer: z.object({}).passthrough().describe("kun feltene som skal endres"),

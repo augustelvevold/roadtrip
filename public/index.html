@@ -446,6 +446,41 @@ function mdHint(){
   return el("div",{class:"mdhint"},"Markdown: **fet**, [lenke](url), [Café](kart:adresse) for kart-lenke, - liste, > [!TIP] / [!NOTE] / [!WARNING] for tips-bokser");
 }
 
+// Delt sjekkliste-blokk – brukes både i seksjoner og på dager.
+// `blocks` er arrayet blokka ligger i (for sletting), `bi` er indeksen.
+function checklistBlock(b, blocks, bi){
+  b.items = b.items || [];
+  const box = el("div",{});
+  if(editing){
+    box.append(el("div",{style:"margin:14px 0 4px"}, inp(b.title,"Gruppetittel (valgfri)",v=>b.title=v)));
+    b.items.forEach((it,ii)=>{
+      box.append(el("div",{class:"erow"},
+        el("div",{class:"ecol"},
+          el("button",{class:"mini",onclick:()=>move(b.items,ii,-1)},icon("chevron-up",12)),
+          el("button",{class:"mini",onclick:()=>move(b.items,ii,1)},icon("chevron-down",12))),
+        (()=>{const t=ta(it.text,"Punkt (markdown)",v=>it.text=v);t.classList.add("grow");return t;})(),
+        el("button",{class:"mini del",onclick:()=>{b.items.splice(ii,1);render();dirty=true;}},icon("trash-2",16))));
+    });
+    box.append(el("button",{class:"add",onclick:()=>{b.items.push({id:uid(),text:"",done:false});render();dirty=true;}},icon("plus",13)," Punkt"),
+               el("button",{class:"add",onclick:()=>{if(confirm("Slette hele sjekklisten?")){blocks.splice(bi,1);render();dirty=true;}}},icon("trash-2",16)," Slett sjekkliste"));
+  } else {
+    if(b.title) box.append(el("h3",{},b.title));
+    b.items.forEach(it=>{
+      const row = el("div",{class:"chkrow"+(it.done?" done":"")});
+      const cb = el("input",{type:"checkbox"});
+      cb.checked = !!it.done;
+      cb.addEventListener("change",async()=>{
+        it.done = cb.checked; row.classList.toggle("done",it.done);
+        await api("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:it.id,value:it.done})});
+        flash();
+      });
+      row.append(cb, el("div",{class:"chktext",html:mdInline(it.text)}));
+      box.append(row);
+    });
+  }
+  return box;
+}
+
 /* ============ bestillinger & betalinger ============ */
 const BOOKING_KINDS = [
   ["overnatting","Overnatting","bed"],
@@ -563,9 +598,11 @@ function renderDay(d, di){
     }
   }
 
-  // tips/tekstblokker – øverst, så man ser dem før tidsplanen
+  // tips/tekstblokker + evt. sjekklister – øverst, før tidsplanen
   d.blocks.forEach((b,bi)=>{
-    if(editing){
+    if(b.type==="checklist"){
+      body.append(checklistBlock(b, d.blocks, bi));
+    } else if(editing){
       body.append(el("div",{class:"erow"},
         (()=>{const t=ta(b.md,"Markdown – bruk > [!TIP] for tipsboks",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
         el("button",{class:"mini del",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",16))));
@@ -573,7 +610,10 @@ function renderDay(d, di){
       body.append(el("div",{html:md(b.md)}));
     }
   });
-  if(editing) body.append(el("button",{class:"add",onclick:()=>{d.blocks.push({md:"> [!TIP]\n> Nytt tips…"});render();dirty=true;}},icon("plus",13)," Tips/tekstblokk"), mdHint());
+  if(editing) body.append(
+    el("button",{class:"add",onclick:()=>{d.blocks.push({md:"> [!TIP]\n> Nytt tips…"});render();dirty=true;}},icon("plus",13)," Tips/tekstblokk"),
+    el("button",{class:"add",onclick:()=>{d.blocks.push({type:"checklist",title:"Pakk til dagsturen",items:[{id:uid(),text:"",done:false}]});render();dirty=true;}},icon("plus",13)," Sjekkliste"),
+    mdHint());
 
   // tidsplan
   if(editing){
@@ -719,35 +759,7 @@ function renderSection(s, si){
 
   s.blocks.forEach((b,bi)=>{
     if(b.type==="checklist"){
-      const box = el("div",{});
-      if(editing){
-        box.append(el("div",{style:"margin:14px 0 4px"}, inp(b.title,"Gruppetittel (valgfri)",v=>b.title=v)));
-        b.items.forEach((it,ii)=>{
-          box.append(el("div",{class:"erow"},
-            el("div",{class:"ecol"},
-              el("button",{class:"mini",onclick:()=>move(b.items,ii,-1)},icon("chevron-up",12)),
-              el("button",{class:"mini",onclick:()=>move(b.items,ii,1)},icon("chevron-down",12))),
-            (()=>{const t=ta(it.text,"Punkt (markdown)",v=>it.text=v);t.classList.add("grow");return t;})(),
-            el("button",{class:"mini del",onclick:()=>{b.items.splice(ii,1);render();dirty=true;}},icon("trash-2",16))));
-        });
-        box.append(el("button",{class:"add",onclick:()=>{b.items.push({id:uid(),text:"",done:false});render();dirty=true;}},icon("plus",13)," Punkt"),
-                   el("button",{class:"add",onclick:()=>{if(confirm("Slette hele sjekklisten?")){s.blocks.splice(bi,1);render();dirty=true;}}},icon("trash-2",16)," Slett sjekkliste"));
-      } else {
-        if(b.title) box.append(el("h3",{},b.title));
-        b.items.forEach(it=>{
-          const row = el("div",{class:"chkrow"+(it.done?" done":"")});
-          const cb = el("input",{type:"checkbox"});
-          cb.checked = !!it.done;
-          cb.addEventListener("change",async()=>{
-            it.done = cb.checked; row.classList.toggle("done",it.done);
-            await api("/api/check",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:it.id,value:it.done})});
-            flash();
-          });
-          row.append(cb, el("div",{class:"chktext",html:mdInline(it.text)}));
-          box.append(row);
-        });
-      }
-      card.append(box);
+      card.append(checklistBlock(b, s.blocks, bi));
     } else if(b.type==="bookings"){
       const box = el("div",{});
       if(editing){
