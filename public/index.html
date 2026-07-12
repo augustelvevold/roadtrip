@@ -142,6 +142,8 @@
   .collapse-all-wrap{display:flex;justify-content:flex-end;margin:16px 2px -8px}
   .collapse-all{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
   .collapse-all:hover{color:var(--accent);border-color:var(--accent)}
+  .hero-edit{border:none;background:transparent;color:var(--line);cursor:pointer;padding:0 2px;vertical-align:middle}
+  .hero-edit:hover{color:var(--accent)}
   .editctl{display:flex;gap:8px;margin-bottom:14px}
   .sechead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
   .sechead h2{margin:0;flex:1}
@@ -335,7 +337,12 @@ function render(){
   if(editing){
     hero.append(inp(C.hero.title,"Tittel",v=>C.hero.title=v));
   } else {
-    hero.append(el("h1",{},C.hero.title), editBtn('hero'));
+    const h = el("h1",{}, C.hero.title);
+    if(!editId){
+      h.append(" ");
+      h.append(el("button",{class:"hero-edit",title:"Rediger tittel",onclick:(e)=>{e.stopPropagation();startEdit('hero');}}, icon("pencil",13)));
+    }
+    hero.append(h);
   }
   app.append(hero);
 
