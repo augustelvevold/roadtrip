@@ -563,6 +563,18 @@ function renderDay(d, di){
     }
   }
 
+  // tips/tekstblokker – øverst, så man ser dem før tidsplanen
+  d.blocks.forEach((b,bi)=>{
+    if(editing){
+      body.append(el("div",{class:"erow"},
+        (()=>{const t=ta(b.md,"Markdown – bruk > [!TIP] for tipsboks",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
+        el("button",{class:"mini del",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",16))));
+    } else {
+      body.append(el("div",{html:md(b.md)}));
+    }
+  });
+  if(editing) body.append(el("button",{class:"add",onclick:()=>{d.blocks.push({md:"> [!TIP]\n> Nytt tips…"});render();dirty=true;}},icon("plus",13)," Tips/tekstblokk"), mdHint());
+
   // tidsplan
   if(editing){
     d.rows.forEach((r,ri)=>{
@@ -649,18 +661,7 @@ function renderDay(d, di){
     }
   }
 
-  // markdown-blokker (tips m.m.)
-  d.blocks.forEach((b,bi)=>{
-    if(editing){
-      body.append(el("div",{class:"erow"},
-        (()=>{const t=ta(b.md,"Markdown – bruk > [!TIP] for tipsboks",v=>b.md=v,"md");t.classList.add("grow");return t;})(),
-        el("button",{class:"mini del",onclick:()=>{d.blocks.splice(bi,1);render();dirty=true;}},icon("trash-2",16))));
-    } else {
-      body.append(el("div",{html:md(b.md)}));
-    }
-  });
   if(editing){
-    body.append(el("button",{class:"add",onclick:()=>{d.blocks.push({md:"> [!TIP]\n> Nytt tips…"});render();dirty=true;}},icon("plus",13)," Tips/tekstblokk"), mdHint());
     body.append(el("div",{style:"margin-top:14px"},
       el("button",{class:"btn danger",onclick:()=>{
         if(confirm("Slette hele «"+d.title+"»?")){ C.days.splice(di,1); render(); dirty=true; }
